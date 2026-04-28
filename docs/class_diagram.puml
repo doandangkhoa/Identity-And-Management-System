@@ -98,18 +98,6 @@ class Permission {
   - action: String
 }
 
-class UserRole {
-  - userId: String
-  - roleId: String
-  - assignedAt: DateTime
-  - assignedBy: String
-}
-
-class RolePermission {
-  - roleId: String
-  - permissionId: String
-  - assignedAt: DateTime
-}
 
 class PasswordHistory {
   - id: String
@@ -206,11 +194,9 @@ SecurityPolicy ..> ClientApplication : <<enforces>>
 User ..> UserStatus
 AuditLog ..> AuditAction
 
-' RBAC (Many-to-Many via join tables)
-User "1" *-- "0..*" UserRole
-UserRole "0..*" -- "1" Role
-Role "1" *-- "0..*" RolePermission
-RolePermission "0..*" -- "1" Permission
+' RBAC (Many-to-Many)
+User "0..*" -- "0..*" Role
+Role "0..*" -- "0..*" Permission
 
 ' Password History (User has many PasswordHistory records)
 User "1" *-- "0..*" PasswordHistory
