@@ -14,165 +14,220 @@ hide circle
 ' ===== ENUMS =====
 
 enum UserStatus {
+  PENDING
   ACTIVE
   LOCKED
-  DEACTIVATED
+  INACTIVE
+}
+
+
+enum AuditAction {
+  LOGIN
+  LOGOUT
+  LOGIN_FAILED
+  MFA_ENABLED
+  MFA_DISABLED
+  PASSWORD_CHANGED
+  USER_LOCKED
+  USER_UNLOCKED
+  USER_CREATED
+  ROLE_ASSIGNED
+  ROLE_REVOKED
+  SESSION_REVOKED
+  CLIENT_APP_REGISTERED
 }
 
 ' ===== ENTITIES =====
 
+class SecurityPolicy {
+  - id: String
+  - policyName: String
+  - maxLoginAttempts: Integer
+  - lockoutDurationMinutes: Integer
+  - passwordMinLength: Integer
+  - passwordRequireUppercase: Boolean
+  - passwordRequireDigit: Boolean
+  - passwordRequireSpecialChar: Boolean
+  - passwordExpiryDays: Integer
+  - passwordHistoryCount: Integer
+  - sessionTimeoutMinutes: Integer
+  - maxConcurrentSessions: Integer
+  - mfaRequired: Boolean
+  --
+  + validate(): Boolean
+  + enforce(user: User): void
+  + isPasswordCompliant(password: String): Boolean
+  + isLockoutRequired(failedAttempts: Integer): Boolean
+}
+
 class User {
-  - userId: Long
+  - id: String
   - username: String
   - email: String
   - passwordHash: String
-  - isMFAEnabled: Boolean
+  - failedLoginAttempts: Integer
   - status: UserStatus
+  - lastLoginAt: DateTime
+  - passwordChangedAt: DateTime
   - createdAt: DateTime
+  - updatedAt: DateTime
   --
-  + login(username: String, password: String): Boolean
-  + logout(): void
+  + login(): Boolean
   + changePassword(oldPassword: String, newPassword: String): Boolean
-  + validatePassword(password: String): Boolean
-}
-
-class Admin {
-  - adminId: Long
-  - username: String
-  - role: String
-  --
-  + manageUser(userId: Long): void
-  + lockUser(userId: Long): void
-  + unlockUser(userId: Long): void
-  + assignRole(userId: Long, role: String): void
+  + lockAccount(): void
+  + unlockAccount(): void
+  + resetFailedAttempts(): void
+  + getUserProfile(): User
 }
 
 class Role {
-  - roleId: Long
+  - id: String
   - roleName: String
+  - description: String
+  - isActive: Boolean
+  - createdAt: DateTime
   --
   + assignPermission(permission: Permission): void
+  + revokePermission(permission: Permission): void
 }
 
 class Permission {
-  - permissionId: Long
+  - id: String
   - permissionName: String
+  - resource: String
+  - action: String
 }
 
-class Session {
-  - sessionId: String
-  - token: String
-  - deviceInfo: String
-  - ipAddress: String
-  - location: String
+class UserRole {
+  - userId: String
+  - roleId: String
+  - assignedAt: DateTime
+  - assignedBy: String
+}
+
+class RolePermission {
+  - roleId: String
+  - permissionId: String
+  - assignedAt: DateTime
+}
+
+class PasswordHistory {
+  - id: String
+  - userId: String
+  - passwordHash: String
   - createdAt: DateTime
-  - expiresAt: DateTime
-  - isActive: Boolean
   --
-  + validateToken(token: String): Boolean
-  + revoke(): void
-  + refreshToken(): String
+  + isPasswordReused(newPasswordHash: String): Boolean
 }
 
-class MFAConfig {
-  - configId: Long
-  - secretKey: String
+class MfaProfile {
+  - id: String
+  - userId: String
+  - secretKeyEncrypted: String
+  - isVerified: Boolean
+  - lastVerifiedAt: DateTime
   - createdAt: DateTime
-  - verified: Boolean
   --
   + generateSecretKey(): String
-  + generateQRCode(): Image
-  + verifyTOTP(code: String): Boolean
+  + verifyTotp(code: String): Boolean
+  + enableMfa(): void
+  + disableMfa(): void
 }
 
 class RecoveryCode {
-  - codeId: Long
+  - id: String
+  - mfaProfileId: String
   - codeHash: String
   - isUsed: Boolean
   - usedAt: DateTime
+  - createdAt: DateTime
   --
-  + verifyCode(input: String): Boolean
-  + markAsUsed(): void
+  + generateRecoveryCode(): String
+  + verify(plainCode: String): Boolean
 }
 
 class AuditLog {
-  - logId: Long
-  - action: String
-  - userId: Long
-  - adminId: Long
-  - timestamp: DateTime
+  - id: String
+  - userId: String
+  - action: AuditAction
+  - detail: String
   - ipAddress: String
-  - details: String
+  - userAgent: String
+  - sessionId: String
+  - timestamp: DateTime
   --
-  + logAction(action: String, details: String): void
-  + queryLogs(filters: Map): List<AuditLog>
+  + logEvent(): void
+  + exportLog(): String
 }
 
-' ===== SERVICES =====
+class UserSession {
+  - id: String
+  - userId: String
+  - clientAppId: String
+  - accessToken: String
+  - refreshToken: String
+  - ipAddress: String
+  - deviceInfo: String
+  - expiresAt: DateTime
+  - refreshTokenExpiresAt: DateTime
+  - isRevoked: Boolean
+  - lastAccessedAt: DateTime
+  - createdAt: DateTime
+  --
+  + createSession(): UserSession
+  + refreshSession(): UserSession
+  + revokeSession(): void
+  + isSessionValid(): Boolean
+}
 
 class ClientApplication {
-  - appId: String
+  - id: String
   - appName: String
-  - apiKey: String
-  - callbackUrl: String
+  - clientSecretKey: String
+  - redirectUri: String
+  - allowedScopes: Set<String>
+  - grantTypes: Set<String>
+  - isActive: Boolean
+  - createdAt: DateTime
   --
-  + requestUserProfile(token: String): User
-  + validateAccessToken(token: String): Boolean
-}
-
-class APIGateway {
-  - gatewayId: String
-  --
-  + validateToken(token: String): Boolean
-  + routeRequest(request: Request): Response
-  + authenticate(request: Request): User
-}
-
-class TokenService {
-  - issuer: String
-  - signingKeyId: String
-  --
-  + verifySignature(token: String): Boolean
-  + checkExpiration(token: String): Boolean
-  + extractClaims(token: String): Claims
-}
-
-class TOTPService {
-  - timeStepSeconds: Integer
-  - allowedDriftSteps: Integer
-  --
-  + generateCode(secret: String, time: Long): String
-  + verifyCode(secret: String, code: String): Boolean
-  + checkMFAStatus(userId: Long): Boolean
+  + authenticateClient(clientSecret: String): Boolean
+  + revokeClient(): void
 }
 
 ' ===== RELATIONSHIPS =====
 
-' Enum dependency
+' SecurityPolicy enforces rules on User, Session, MFA, and ClientApplication
+SecurityPolicy ..> User : <<enforces>>
+SecurityPolicy ..> UserSession : <<enforces>>
+SecurityPolicy ..> MfaProfile : <<enforces>>
+SecurityPolicy ..> ClientApplication : <<enforces>>
+
+' Enum dependencies
 User ..> UserStatus
+AuditLog ..> AuditAction
 
-' Inheritance: Admin extends User
-Admin --|> User
+' RBAC (Many-to-Many via join tables)
+User "1" *-- "0..*" UserRole
+UserRole "0..*" -- "1" Role
+Role "1" *-- "0..*" RolePermission
+RolePermission "0..*" -- "1" Permission
 
-' RBAC (Many-to-Many)
-User "0..*" -- "0..*" Role
-Role "0..*" -- "0..*" Permission
+' Password History (User has many PasswordHistory records)
+User "1" *-- "0..*" PasswordHistory
 
-' Authentication & Session Management
-User "1" *-- "0..*" Session
+' MFA Lifecycle (User owns one optional MfaProfile — aggregation to allow history retention)
+User "1" o-- "0..1" MfaProfile
 
-' MFA Lifecycle
-User "1" *-- "0..1" MFAConfig
-MFAConfig "1" *-- "0..*" RecoveryCode
-MFAConfig ..> TOTPService
+' MfaProfile owns many RecoveryCodes (composition — codes meaningless without profile)
+MfaProfile "1" *-- "0..*" RecoveryCode
 
-' Audit
+' Audit (User has many AuditLogs — association, logs persist independently)
 User "1" -- "0..*" AuditLog
-Admin ..> AuditLog
 
-' API Communication
-ClientApplication ..> APIGateway
-APIGateway ..> TokenService
-APIGateway ..> TOTPService
+' Session Management (User has many Sessions — aggregation, sessions can be revoked independently)
+User "1" o-- "0..*" UserSession
+
+' UserSession belongs to ClientApplication (optional if direct login exists)
+UserSession "0..*" -- "0..1" ClientApplication
 
 @enduml
