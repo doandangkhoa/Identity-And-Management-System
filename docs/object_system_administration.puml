@@ -1,0 +1,90 @@
+@startuml object_system_administration
+
+title Sơ đồ đối tượng: System Administration
+
+top to bottom direction
+skinparam shadowing false
+skinparam linetype ortho
+skinparam nodesep 70
+skinparam ranksep 60
+skinparam object {
+  BorderColor #333333
+  BackgroundColor #FFFFFF
+  FontName Arial
+  FontSize 12
+}
+
+object "admin1: User" as admin1 {
+  id = "20235330"
+  username = "admin_root"
+  email = "admin@sis.hust.edu.vn"
+  passwordHash = "$2a$12$..."
+  failedLoginAttempts = 0
+  status = ACTIVE
+  lastLoginAt = 2026-04-28 07:45:00
+  passwordChangedAt = 2025-01-01 00:00:00
+  createdAt = 2023-08-15 09:00:00
+  updatedAt = 2026-04-28 07:45:00
+}
+
+object "role_admin: Role" as role_admin {
+  id = "R-01"
+  roleName = "SUPER_ADMIN"
+  description = "Toàn quyền quản trị hệ thống"
+  isActive = true
+  createdAt = 2023-08-01 08:00:00
+}
+
+object "perm_manage: Permission" as perm_manage {
+  id = "P-15"
+  permissionName = "MANAGE_USERS"
+  resource = "UserAccount"
+  action = "UPDATE_STATUS"
+}
+
+object "log_01: AuditLog" as log_01 {
+  id = "AL-10000"
+  userId = "20235330"
+  action = USER_LOCKED
+  detail = "Khóa tài khoản 20235046 do vượt quá 5 lần đăng nhập sai"
+  ipAddress = "192.168.1.50"
+  userAgent = "Mozilla/5.0 (Windows NT 10.0)"
+  sessionId = "S-8888"
+  timestamp = 2026-04-28 08:00:00
+}
+
+object "policy_01: SecurityPolicy" as policy_01 {
+  id = "POL-01"
+  policyName = "Strict_Access_Control"
+  maxLoginAttempts = 5
+  lockoutDurationMinutes = 30
+  passwordMinLength = 12
+  passwordRequireUppercase = true
+  passwordRequireDigit = true
+  passwordRequireSpecialChar = true
+  passwordExpiryDays = 90
+  sessionTimeoutMinutes = 5
+  maxConcurrentSessions = 2
+  mfaRequired = true
+}
+
+object "target_u: User" as target_u {
+  id = "20235046"
+  username = "hacker_suspect"
+  email = "hacker235046@sis.hust.edu.vn"
+  passwordHash = "fvdbvdbc"
+  failedLoginAttempts = 6
+  status = Locked
+  lastLoginAt = 2026-04-25 10:00:00
+  passwordChangedAt = 2025-12-12 10:00:00
+  createdAt = 2020-12-12 16:00:00
+  updatedAt = 2026-04-28 08:00:00
+}
+
+admin1 -- role_admin : assigned to
+role_admin -- perm_manage : includes
+admin1 -- log_01 : generates
+log_01 -- target_u : refers to
+policy_01 -- target_u : enforces
+
+@enduml

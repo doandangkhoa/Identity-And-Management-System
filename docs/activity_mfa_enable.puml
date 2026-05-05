@@ -1,0 +1,57 @@
+@startuml activity_mfa_01_enable
+
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam activity {
+  BackgroundColor #F8FAFC
+  BorderColor #2C3E50
+  ArrowColor #2C3E50
+  DiamondBackgroundColor #FFFFFF
+  DiamondBorderColor #2C3E50
+}
+
+title UC-MFA-01: Bật xác thực đa yếu tố
+
+|Người dùng|
+start
+:Chọn chức năng\nBật MFA;
+
+|Hệ thống|
+:UC-MFA-01 include\nGenerate QR & Secret Key;
+:Sinh Secret Key\nvà tạo mã QR;
+:Hiển thị QR Code\nvà Secret Key;
+
+|Người dùng|
+:Mở ứng dụng Authenticator\nvà quét mã QR;
+:Nhập mã TOTP 6 số;
+
+|Hệ thống|
+:Xác thực mã TOTP;
+
+if (Mã TOTP hợp lệ?) then (Sai/Hết hạn)
+  :Thông báo mã không\nchính xác;
+  |Người dùng|
+  :Nhập lại mã TOTP;
+  stop
+else (Hợp lệ)
+endif
+
+|Hệ thống|
+:Lưu Secret Key vào\nhồ sơ MFA;
+:UC-MFA-01 include\nGenerate Recovery Codes;
+:Sinh ngẫu nhiên\n10 mã khôi phục;
+:Hash và lưu các mã\nkhôi phục;
+:Hiển thị mã khôi phục\ncho người dùng;
+
+|Người dùng|
+:Tải hoặc lưu danh sách\nmã khôi phục;
+:Bấm nút "Tôi đã lưu";
+
+|Hệ thống|
+:Cập nhật trạng thái\nMFA thành Đã bật;
+:Ghi audit log\nMFA_ENABLED;
+:Thông báo thiết lập\nthành công;
+stop
+
+@enduml

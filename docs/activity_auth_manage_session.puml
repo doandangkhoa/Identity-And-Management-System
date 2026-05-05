@@ -1,0 +1,70 @@
+@startuml activity_auth_04_manage_session
+
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam activity {
+  BackgroundColor #F8FAFC
+  BorderColor #2C3E50
+  ArrowColor #2C3E50
+  DiamondBackgroundColor #FFFFFF
+  DiamondBorderColor #2C3E50
+}
+
+title UC-AUTH-04: Quản lý phiên làm việc
+
+|Người dùng/Quản trị viên|
+start
+:Mở màn hình\nquản lý phiên;
+
+|Hệ thống IAM|
+:Xác thực accessToken;
+
+if (Token hợp lệ?) then (Không)
+  :Từ chối truy cập;
+  |Người dùng/Quản trị viên|
+  :Đăng nhập lại;
+  stop
+else (Có)
+endif
+
+|Hệ thống IAM|
+:UC-AUTH-04 include\nCheck Login History;
+:Truy vấn danh sách phiên\nvà lịch sử đăng nhập;
+:Tổng hợp device, IP,\nthời gian, vị trí;
+
+|Người dùng/Quản trị viên|
+:Xem danh sách phiên;
+
+if (Có thu hồi phiên?) then (Không)
+  :Kết thúc xem thông tin;
+  stop
+else (Có)
+endif
+
+|Người dùng/Quản trị viên|
+:Chọn phiên cần thu hồi;
+
+|Hệ thống IAM|
+:Kiểm tra quyền thu hồi phiên;
+
+if (Đủ quyền?) then (Không)
+  :Từ chối thao tác;
+  |Người dùng/Quản trị viên|
+  :Xem thông báo lỗi;
+  stop
+else (Có)
+endif
+
+|Hệ thống IAM|
+:UC-AUTH-04 extend\nRevoke;
+:Cập nhật phiên\nis_active = false;
+:Vô hiệu hóa token\ncủa phiên đã chọn;
+:Ghi audit log SESSION_REVOKED;
+:Tải lại danh sách phiên;
+
+|Người dùng/Quản trị viên|
+:Xem kết quả cập nhật;
+stop
+
+@enduml

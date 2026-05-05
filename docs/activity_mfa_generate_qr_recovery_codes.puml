@@ -1,0 +1,64 @@
+@startuml activity_mfa_03_04_generate_qr_recovery_codes
+
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam activity {
+  BackgroundColor #F8FAFC
+  BorderColor #2C3E50
+  ArrowColor #2C3E50
+  DiamondBackgroundColor #FFFFFF
+  DiamondBorderColor #2C3E50
+}
+
+title UC-MFA-03/04: Tạo QR, Secret Key và Recovery Codes
+
+|Hệ thống|
+start
+:Nhận yêu cầu khởi tạo\nthiết lập MFA;
+:Kiểm tra người dùng\nđã đăng nhập;
+
+if (Tài khoản đã bật MFA?) then (Có)
+  :Từ chối tạo cấu hình mới;
+  :Thông báo MFA đã được bật;
+  stop
+else (Chưa bật)
+endif
+
+:Sinh Secret Key 160-bit\nbằng CSPRNG;
+:Mã hóa Base32\nSecret Key;
+:Lưu Secret Key tạm thời\ntrạng thái mfa_pending;
+:Tạo OTP Auth URI\nchuẩn otpauth://totp;
+:Chuyển OTP Auth URI\nthành QR Code;
+
+|Người dùng|
+:Quét QR Code\nbằng Authenticator;
+:Nhập mã TOTP đầu tiên;
+
+|Hệ thống|
+:Xác thực mã TOTP\ntrong cửa sổ thời gian cho phép;
+
+if (Mã TOTP hợp lệ?) then (Không)
+  :Thông báo mã sai\nhoặc hết hạn;
+  :Giữ trạng thái mfa_pending;
+  |Người dùng|
+  :Nhập lại mã TOTP mới;
+  stop
+else (Có)
+endif
+
+|Hệ thống|
+:Cập nhật Secret Key\nthành đã xác minh;
+:Sinh 10 mã khôi phục\n8-10 ký tự;
+:Hash từng mã khôi phục;
+:Lưu bản hash mã khôi phục\nvào cơ sở dữ liệu;
+:Trả danh sách mã chưa mã hóa\ncho giao diện;
+
+|Người dùng|
+:Xem và lưu danh sách\nmã khôi phục;
+
+|Hệ thống|
+:Hoàn tất bước chuẩn bị\nkích hoạt MFA;
+stop
+
+@enduml

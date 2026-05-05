@@ -1,0 +1,39 @@
+@startuml communication_admin_manage_session
+
+title 5.3.5. Sơ đồ giao tiếp - Admin manage Session
+
+left to right direction
+skinparam shadowing false
+skinparam linetype ortho
+skinparam nodesep 90
+skinparam ranksep 90
+skinparam rectangle {
+  BorderColor #333333
+  BackgroundColor #FFFFFF
+  FontName Arial
+  FontSize 12
+}
+
+frame "Interaction Admin manage Session" {
+  actor "System Admin" as admin
+  rectangle ": Admin UI" as ui
+  rectangle ": AuthService" as auth
+  rectangle ": SessionService" as sessionSvc
+  rectangle ": AuditLogService" as audit
+  database "Database" as db
+
+  admin -right-> ui : 1. Mở quản lý phiên
+  ui -right-> auth : 2. Kiểm tra quyền admin
+  auth -right-> db : 3. Load role/permission
+  ui -down-> sessionSvc : 4. Truy vấn phiên user
+  sessionSvc -right-> db : 5. SELECT user_session
+  db ..left..> sessionSvc : 6. Danh sách phiên
+  admin -right-> ui : 7. Chọn phiên cần thu hồi
+  ui -down-> sessionSvc : 8. revokeSession(sessionId)
+  sessionSvc -right-> db : 9. isActive = false
+  sessionSvc -up-> audit : 10. Ghi log SESSION_REVOKED
+  audit -right-> db : 11. Lưu audit log
+  sessionSvc ..up..> ui : 12. Phiên đã cập nhật
+}
+
+@enduml

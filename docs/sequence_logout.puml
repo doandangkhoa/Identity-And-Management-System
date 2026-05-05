@@ -1,0 +1,44 @@
+@startuml UC_AUTH_05_Logout
+
+title UC-AUTH-05: Logout
+
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+skinparam shadowing false
+skinparam sequence {
+  ArrowColor #2C3E50
+  ActorBorderColor #2C3E50
+  LifeLineBorderColor #2C3E50
+  ParticipantBorderColor #2C3E50
+  ParticipantBackgroundColor #ECF0F1
+  ActorBackgroundColor #ECF0F1
+}
+
+actor "Người dùng" as User
+participant "Frontend" as FE
+participant "AuthService" as Auth
+participant "SessionService" as Session
+database "Database" as DB
+
+User -> FE : Nhấn "Đăng xuất"
+FE -> Auth : POST /auth/logout [Bearer accessToken]
+
+Auth -> Auth : Xác thực & giải mã JWT
+
+alt Token không hợp lệ hoặc hết hạn
+  Auth --> FE : 401 Token không hợp lệ
+  FE --> User : Chuyển về trang đăng nhập
+else Token hợp lệ
+  Auth -> Session : revokeSession(sessionId)
+  Session -> DB : UPDATE user_session\nSET is_active = false,\n    access_token = null,\n    refresh_token = null
+  DB --> Session : OK
+  Session --> Auth : OK
+
+  Auth -> DB : INSERT audit_log (LOGOUT)
+
+  Auth --> FE : 200 Đăng xuất thành công
+  FE -> FE : Xoá accessToken và refreshToken\nkhỏi localStorage/cookie
+  FE --> User : Chuyển về trang đăng nhập
+end
+
+@enduml

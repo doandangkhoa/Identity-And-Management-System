@@ -1,0 +1,42 @@
+@startuml activity_sys_01_create_user
+
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam activity {
+  BackgroundColor #F8FAFC
+  BorderColor #2C3E50
+  ArrowColor #2C3E50
+  DiamondBackgroundColor #FFFFFF
+  DiamondBorderColor #2C3E50
+}
+
+title UC-SYS-01: Quản lý người dùng - Thêm tài khoản
+
+|Quản trị viên|
+start
+:Chọn chức năng\nthêm người dùng;
+:Nhập thông tin\n(tên đăng nhập, email,\nvai trò ban đầu...);
+
+|Hệ thống|
+:Kiểm tra dữ liệu;
+
+if (Dữ liệu hợp lệ?) then (Sai)
+  :Thông báo lỗi;
+  |Quản trị viên|
+  :Sửa và nhập lại\nthông tin;
+  stop
+else (Đúng)
+endif
+
+|Hệ thống|
+:Tạo tài khoản mới\ntrong CSDL;
+:Gán vai trò ban đầu\nnếu có;
+:Gửi email kích hoạt\nhoặc mật khẩu tạm thời\ncho người dùng;
+:Ghi audit log\nUSER_CREATED;
+
+|Quản trị viên|
+:Xem thông báo thêm\ntài khoản thành công;
+stop
+
+@enduml

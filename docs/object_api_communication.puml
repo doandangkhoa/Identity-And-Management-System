@@ -1,0 +1,54 @@
+@startuml object_api_communication
+
+title 4.3.4. API Communication
+
+top to bottom direction
+skinparam shadowing false
+skinparam linetype ortho
+skinparam nodesep 120
+skinparam ranksep 95
+skinparam object {
+  BorderColor #333333
+  BackgroundColor #FFFFFF
+  FontName Arial
+  FontSize 12
+}
+
+object "clientApp: ClientApplication" as clientApp {
+  id = "ZLP"
+  appName = "ZaloPay"
+  clientSecretKey = "******"
+  redirectUri = ".../openinapp"
+  allowScopes = "profile,email"
+  isActive = true
+  createdAt = "2025-10-11"
+}
+
+object "session_01: UserSession" as session_01 {
+  id = "S-9999"
+  userID = "20235046"
+  clientAppID = "ZLP"
+  accessToken = "jwt..."
+  refreshToken = "refresh..."
+  ipAddress = "192.168.1.15"
+  deviceInfo = "Chrome/Win11"
+  expiredAt = "2025-10-12"
+  isRevoked = false
+  createdAt = "2025-10-11"
+}
+
+object "u: User" as u {
+  id = "2023506"
+  username = "Ducnx"
+  email = "duc.nx...@sis.hust.edu.vn"
+  passwordHashed = "hash..."
+  failedLoginAttempts = 0
+  status = Active
+  createdAt = "2020-12-12"
+  updatedAt = "2025-10-11"
+}
+
+clientApp -down- session_01 : attached\nto request
+session_01 -down- u : refer to
+
+@enduml

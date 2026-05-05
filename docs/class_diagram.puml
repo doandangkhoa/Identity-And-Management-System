@@ -7,8 +7,9 @@ top to bottom direction
 skinparam classAttributeIconSize 0
 skinparam shadowing false
 skinparam linetype ortho
-skinparam nodesep 80
-skinparam ranksep 70
+skinparam nodesep 60
+skinparam ranksep 80
+skinparam ArrowFontSize 11
 hide circle
 
 ' ===== ENUMS =====
@@ -19,7 +20,6 @@ enum UserStatus {
   LOCKED
   INACTIVE
 }
-
 
 enum AuditAction {
   LOGIN
@@ -77,7 +77,6 @@ class User {
   + lockAccount(): void
   + unlockAccount(): void
   + resetFailedAttempts(): void
-  + getUserProfile(): User
 }
 
 class Role {
@@ -96,8 +95,9 @@ class Permission {
   - permissionName: String
   - resource: String
   - action: String
+  --
+  + matches(resource: String, action: String): Boolean
 }
-
 
 class PasswordHistory {
   - id: String
@@ -173,8 +173,8 @@ class ClientApplication {
   - appName: String
   - clientSecretKey: String
   - redirectUri: String
-  - allowedScopes: Set<String>
-  - grantTypes: Set<String>
+  - allowedScopes: List~String~
+  - grantTypes: List~String~
   - isActive: Boolean
   - createdAt: DateTime
   --
@@ -182,12 +182,39 @@ class ClientApplication {
   + revokeClient(): void
 }
 
+' ===== LAYOUT GROUPS =====
+
+together {
+  class User
+  enum UserStatus
+}
+
+together {
+  class Role
+  class Permission
+}
+
+together {
+  class MfaProfile
+  class RecoveryCode
+}
+
+together {
+  class UserSession
+  class ClientApplication
+}
+
+together {
+  class AuditLog
+  enum AuditAction
+}
+
 ' ===== RELATIONSHIPS =====
 
 ' SecurityPolicy enforces rules on User, Session, MFA, and ClientApplication
-SecurityPolicy ..> User : <<enforces>>
-SecurityPolicy ..> UserSession : <<enforces>>
-SecurityPolicy ..> MfaProfile : <<enforces>>
+SecurityPolicy ..> User         : <<enforces>>
+SecurityPolicy ..> UserSession  : <<enforces>>
+SecurityPolicy ..> MfaProfile   : <<enforces>>
 SecurityPolicy ..> ClientApplication : <<enforces>>
 
 ' Enum dependencies
@@ -198,22 +225,19 @@ AuditLog ..> AuditAction
 User "0..*" -- "0..*" Role
 Role "0..*" -- "0..*" Permission
 
-' Password History (User has many PasswordHistory records)
+' Password History
 User "1" *-- "0..*" PasswordHistory
 
-' MFA Lifecycle (User owns one optional MfaProfile — aggregation to allow history retention)
+' MFA Lifecycle
 User "1" o-- "0..1" MfaProfile
-
-' MfaProfile owns many RecoveryCodes (composition — codes meaningless without profile)
 MfaProfile "1" *-- "0..*" RecoveryCode
 
-' Audit (User has many AuditLogs — association, logs persist independently)
+' Audit
 User "1" -- "0..*" AuditLog
+AuditLog "0..*" -- "0..1" UserSession
 
-' Session Management (User has many Sessions — aggregation, sessions can be revoked independently)
+' Session Management
 User "1" o-- "0..*" UserSession
-
-' UserSession belongs to ClientApplication (optional if direct login exists)
 UserSession "0..*" -- "0..1" ClientApplication
 
 @enduml

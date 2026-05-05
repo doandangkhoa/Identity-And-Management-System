@@ -1,0 +1,34 @@
+@startuml communication_auth_logout
+
+title 5.3.2. Sơ đồ giao tiếp - Đăng xuất
+
+left to right direction
+skinparam shadowing false
+skinparam linetype ortho
+skinparam nodesep 90
+skinparam ranksep 90
+skinparam rectangle {
+  BorderColor #333333
+  BackgroundColor #FFFFFF
+  FontName Arial
+  FontSize 12
+}
+
+frame "Interaction Logout" {
+  actor "Người dùng" as user
+  rectangle ": Frontend" as fe
+  rectangle ": AuthService" as auth
+  rectangle ": SessionService" as session
+  database "Database" as db
+
+  user -right-> fe : 1. Nhấn Đăng xuất
+  fe -right-> auth : 2. POST /auth/logout
+  auth -right-> session : 3. Thu hồi phiên hiện tại
+  session -right-> db : 4. Cập nhật isActive = false
+  auth -down-> db : 5. Ghi audit log LOGOUT
+  auth ..left..> fe : 6. HTTP 200 OK
+  fe -down-> fe : 7. Xóa token cục bộ
+  fe ..left..> user : 8. Chuyển về Login
+}
+
+@enduml

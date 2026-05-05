@@ -1,0 +1,58 @@
+@startuml UC_SYS_Admin_Config_Policies
+
+title Admin config policies
+
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+skinparam shadowing false
+skinparam sequence {
+  ArrowColor #2C3E50
+  ActorBorderColor #2C3E50
+  LifeLineBorderColor #2C3E50
+  ParticipantBorderColor #2C3E50
+  ParticipantBackgroundColor #ECF0F1
+  ActorBackgroundColor #ECF0F1
+}
+
+actor "Quản trị viên" as Admin
+participant "Admin UI" as UI
+participant "AuthService" as Auth
+participant "PolicyService" as Policy
+participant "AuditService" as Audit
+database "Database" as DB
+
+Admin -> UI : Mở màn hình cấu hình chính sách
+UI -> Auth : validateAdminToken(accessToken)
+Auth -> DB : Load admin role/permissions
+DB --> Auth : Admin permissions
+
+alt Không có quyền cấu hình policy
+  Auth --> UI : 403 Forbidden
+  UI --> Admin : Thông báo không đủ quyền
+else Có quyền cấu hình
+  Auth --> UI : OK
+  UI -> Policy : getCurrentPolicy()
+  Policy -> DB : SELECT security_policy active
+  DB --> Policy : SecurityPolicy
+  Policy --> UI : Policy hiện tại
+  UI --> Admin : Hiển thị policy hiện tại
+
+  Admin -> UI : Cập nhật maxLoginAttempts,\nsessionTimeout, mfaRequired,...
+  UI -> Policy : updatePolicy(policyPayload)
+  Policy -> Policy : validatePolicyRules(policyPayload)
+
+  alt Dữ liệu chính sách không hợp lệ
+    Policy --> UI : 400 Validation error
+    UI --> Admin : Hiển thị lỗi cấu hình
+  else Dữ liệu hợp lệ
+    Policy -> DB : UPDATE security_policy
+    DB --> Policy : OK
+    Policy -> Audit : record(POLICY_UPDATED)
+    Audit -> DB : INSERT audit_log
+    DB --> Audit : OK
+    Policy --> UI : 200 OK + updatedPolicy
+    UI --> Admin : Hiển thị cấu hình đã lưu
+  end
+end
+
+@enduml

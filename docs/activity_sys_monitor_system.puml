@@ -1,0 +1,49 @@
+@startuml activity_sys_04_monitor_system
+
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam activity {
+  BackgroundColor #F8FAFC
+  BorderColor #2C3E50
+  ArrowColor #2C3E50
+  DiamondBackgroundColor #FFFFFF
+  DiamondBorderColor #2C3E50
+  BarColor #111111
+}
+
+title UC-SYS-04: Giám sát hoạt động hệ thống
+
+|Quản trị viên|
+start
+:Mở trang Dashboard\ngiám sát;
+
+|Hệ thống|
+:Thu thập dữ liệu\nvận hành;
+
+fork
+  :Thu thập thông số\ntài nguyên\n(CPU, RAM, Disk);
+fork again
+  :Thống kê số lượng\nSession/User đã MFA\nđang thực hiện;
+fork again
+  :Kiểm tra trạng thái\nkết nối các Service/API;
+end fork
+
+:Tổng hợp dữ liệu\nthời gian thực;
+:Hiển thị dữ liệu\ntrên Dashboard;
+
+|Quản trị viên|
+:Xem biểu đồ và\nchỉ số giám sát;
+
+if (Xem chi tiết nhật ký?) then (Có)
+  |Hệ thống|
+  :Gọi UC-SYS-05\nTruy xuất audit log;
+  |Quản trị viên|
+  :Xem nhật ký chi tiết;
+else (Không)
+endif
+
+|Quản trị viên|
+stop
+
+@enduml

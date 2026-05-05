@@ -1,0 +1,35 @@
+@startuml
+left to right direction
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+
+rectangle "System Administration" {
+
+  usecase "Manage User Accounts" as UC1
+  usecase "Monitor System" as UC2
+  usecase "Manage Roles And\nPermission" as UC3
+
+  usecase "Lock/Unlock Account" as UC4
+  usecase "View Audit Logs" as UC5
+}
+
+actor "Admin" as Admin
+
+' ===== Actor =====
+Admin -- UC1
+Admin -- UC2
+Admin -- UC3
+
+' ===== Relationships =====
+UC4 ..> UC1 : <<extend>>
+UC2 ..> UC5 : <<include>>
+
+' ===== Layout ép giống hình =====
+UC1 -[hidden]down- UC2
+UC2 -[hidden]down- UC3
+
+UC1 -[hidden]right- UC4
+UC2 -[hidden]right- UC5
+
+@enduml

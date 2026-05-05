@@ -1,0 +1,37 @@
+@startuml communication_admin_lock_account
+
+title 5.3.3. Sơ đồ giao tiếp - Admin lock account
+
+left to right direction
+skinparam shadowing false
+skinparam linetype ortho
+skinparam nodesep 90
+skinparam ranksep 90
+skinparam rectangle {
+  BorderColor #333333
+  BackgroundColor #FFFFFF
+  FontName Arial
+  FontSize 12
+}
+
+frame "Interaction Admin lock account" {
+  actor "System Admin" as admin
+  rectangle ": UserService" as userSvc
+  rectangle ": SessionService" as sessionSvc
+  rectangle ": AuditLogService" as audit
+  rectangle ": EmailAgent" as email
+  database "Database" as db
+
+  admin -right-> userSvc : 1. POST /admin/users/{id}/lock
+  userSvc -right-> db : 2. Truy vấn tài khoản
+  db ..left..> userSvc : 3. Thông tin User
+  userSvc -right-> db : 4. Cập nhật status = LOCKED
+  userSvc -down-> sessionSvc : 5. Thu hồi toàn bộ phiên
+  sessionSvc -right-> db : 6. Deactivate sessions
+  userSvc -up-> audit : 7. Ghi log USER_LOCKED
+  audit -right-> db : 8. Lưu audit log
+  userSvc -down-> email : 9. Gửi email thông báo
+  userSvc ..left..> admin : 10. HTTP 200 OK
+}
+
+@enduml

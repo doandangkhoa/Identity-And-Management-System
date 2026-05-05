@@ -1,0 +1,43 @@
+@startuml activity_auth_05_logout
+
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam activity {
+  BackgroundColor #F8FAFC
+  BorderColor #2C3E50
+  ArrowColor #2C3E50
+  DiamondBackgroundColor #FFFFFF
+  DiamondBorderColor #2C3E50
+}
+
+title UC-AUTH-05: Đăng xuất hệ thống
+
+|Người dùng|
+start
+:Nhấn "Đăng xuất";
+
+|Hệ thống IAM|
+:Xác thực accessToken;
+
+if (Token hợp lệ?) then (Không)
+  :Không tìm thấy phiên hợp lệ;
+  |Người dùng|
+  :Xóa token cục bộ\nvà về trang đăng nhập;
+  stop
+else (Có)
+endif
+
+|Hệ thống IAM|
+:Tìm phiên hiện tại;
+:Thu hồi phiên làm việc;
+:Xóa accessToken/refreshToken\nđã lưu phía server;
+:Ghi audit log LOGOUT;
+:Trả kết quả thành công;
+
+|Người dùng|
+:Xóa token cục bộ;
+:Chuyển về trang đăng nhập;
+stop
+
+@enduml

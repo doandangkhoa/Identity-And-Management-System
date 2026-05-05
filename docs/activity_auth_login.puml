@@ -1,0 +1,113 @@
+@startuml activity_auth_01_login
+
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam activity {
+  BackgroundColor #F8FAFC
+  BorderColor #2C3E50
+  ArrowColor #2C3E50
+  DiamondBackgroundColor #FFFFFF
+  DiamondBorderColor #2C3E50
+}
+
+title UC-AUTH-01: Đăng nhập hệ thống
+
+|Người dùng|
+start
+:Mở trang đăng nhập;
+:Nhập username và password;
+
+|Hệ thống IAM|
+:Kiểm tra dữ liệu bắt buộc;
+
+if (Dữ liệu hợp lệ?) then (Không)
+  :Trả lỗi nhập liệu;
+  |Người dùng|
+  :Nhập lại thông tin;
+  stop
+else (Có)
+endif
+
+|Hệ thống IAM|
+:Tìm tài khoản theo username;
+
+if (Tài khoản tồn tại?) then (Không)
+  :Trả lỗi đăng nhập không hợp lệ;
+  |Người dùng|
+  :Xem thông báo lỗi;
+  stop
+else (Có)
+endif
+
+|Hệ thống IAM|
+:UC-AUTH-01 include\nCheck Account Information;
+
+if (Tài khoản đang bị khóa?) then (Có)
+  :Từ chối đăng nhập;
+  |Người dùng|
+  :Xem thông báo tài khoản bị khóa;
+  stop
+else (Không)
+endif
+
+|Hệ thống IAM|
+:Xác thực mật khẩu;
+
+if (Mật khẩu đúng?) then (Không)
+  :Tăng failedLoginAttempts;
+
+  if (Vượt giới hạn 5 lần?) then (Có)
+    :UC-AUTH-01 extend\nLock Account;
+    :Cập nhật status = LOCKED;
+    :Ghi audit log USER_LOCKED;
+    |Người dùng|
+    :Xem thông báo khóa tài khoản;
+    stop
+  else (Không)
+    |Người dùng|
+    :Xem thông báo sai mật khẩu;
+    stop
+  endif
+else (Có)
+endif
+
+|Hệ thống IAM|
+:Đặt failedLoginAttempts = 0;
+:Kiểm tra trạng thái MFA;
+
+if (Tài khoản đã bật MFA?) then (Có)
+  :Tạo tempToken;
+  |Người dùng|
+  :Chọn phương thức MFA\nvà nhập mã xác thực;
+
+  |Hệ thống IAM|
+  :UC-AUTH-01 extend\nAuthenticate MFA (UC-MFA-05);
+
+  if (Phương thức MFA?) then (TOTP)
+    :Xác thực mã TOTP;
+  else (Mã khôi phục)
+    :Xác thực mã khôi phục;
+  endif
+
+  if (MFA hợp lệ?) then (Không)
+    :Không cấp phiên chính thức;
+    |Người dùng|
+    :Xem thông báo MFA thất bại;
+    stop
+  else (Có)
+  endif
+else (Không)
+endif
+
+|Hệ thống IAM|
+:Tạo phiên làm việc;
+:Phát hành accessToken\nvà refreshToken;
+:Lưu user_session;
+:Ghi audit log LOGIN_SUCCESS;
+
+|Người dùng|
+:Đăng nhập thành công\nvà vào Dashboard;
+stop
+
+@enduml

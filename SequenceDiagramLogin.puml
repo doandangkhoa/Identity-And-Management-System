@@ -1,0 +1,58 @@
+@startuml
+title Sequence Diagram - Login with MFA
+
+actor User
+participant "Client App" as Client
+participant "Auth API" as API
+database DB
+participant "MFA Service" as MFA
+
+User -> Client: Nhập username/password
+Client -> API: POST /login
+
+API -> DB: Get user by username
+DB --> API: user | null
+
+alt User không tồn tại
+    API --> Client: 401 Unauthorized
+    Client --> User: Báo lỗi
+else User tồn tại
+    API -> API: Verify password
+
+    alt Sai password
+        API --> Client: 401 Unauthorized
+        Client --> User: Báo lỗi
+    else Đúng password
+        alt MFA OFF
+            API -> API: Generate token
+            API -> DB: Save token
+            API --> Client: Access Token
+            Client --> User: Login success
+        else MFA ON
+            API -> API: Generate temp session token
+            API -> DB: Save temp session token
+            API --> Client: 200 + mfa_session_token + Yêu cầu MFA
+            User -> Client: Nhập MFA code
+            Client -> API: POST /verify-mfa (mfa_session_token + code)
+
+            API -> DB: Get user by mfa_session_token
+            DB --> API: user
+
+            API -> MFA: Verify code
+            MFA --> API: result
+
+            alt MFA hợp lệ
+                API -> DB: Invalidate temp session token
+                API -> API: Generate token
+                API -> DB: Save token
+                API --> Client: Access Token
+                Client --> User: Login success
+            else Sai MFA
+                API --> Client: 401 MFA invalid
+                Client --> User: Báo lỗi
+            end
+        end
+    end
+end
+
+@enduml

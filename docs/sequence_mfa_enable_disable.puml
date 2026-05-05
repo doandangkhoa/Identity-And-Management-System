@@ -1,0 +1,99 @@
+@startuml UC_MFA_Enable_Disable
+
+title Enable/Disable MFA
+
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+skinparam shadowing false
+skinparam sequence {
+  ArrowColor #2C3E50
+  ActorBorderColor #2C3E50
+  LifeLineBorderColor #2C3E50
+  ParticipantBorderColor #2C3E50
+  ParticipantBackgroundColor #ECF0F1
+  ActorBackgroundColor #ECF0F1
+}
+
+actor "Người dùng" as User
+participant "Frontend" as FE
+participant "AuthService" as Auth
+participant "MFAService" as MFA
+participant "RecoveryCodeService" as Recovery
+database "Database" as DB
+
+User -> FE : Mở cài đặt bảo mật
+FE -> Auth : validateSession(accessToken)
+Auth -> DB : SELECT user_session/user
+DB --> Auth : Session + User
+
+alt Token không hợp lệ hoặc phiên hết hạn
+  Auth --> FE : 401 Unauthorized
+  FE --> User : Yêu cầu đăng nhập lại
+else Phiên hợp lệ
+  Auth --> FE : OK
+
+  alt Enable MFA
+    User -> FE : Chọn "Bật MFA"
+    FE -> MFA : startMfaSetup(userId)
+    MFA -> MFA : Sinh Secret Key và OTP Auth URI
+    MFA -> DB : INSERT/UPDATE mfa_profile\nstatus = PENDING
+    DB --> MFA : OK
+    MFA --> FE : QR Code + Secret Key
+    FE --> User : Hiển thị QR và Secret Key
+
+    User -> FE : Quét QR và nhập mã TOTP
+    FE -> MFA : verifySetupCode(userId, totpCode)
+    MFA -> DB : SELECT pending mfa_profile
+    DB --> MFA : Secret Key
+    MFA -> MFA : Xác thực TOTP
+
+    alt TOTP không hợp lệ
+      MFA -> DB : INSERT audit_log (MFA_ENABLE_FAILED)
+      MFA --> FE : 400 Invalid TOTP
+      FE --> User : Thông báo mã không hợp lệ
+    else TOTP hợp lệ
+      MFA -> Recovery : generateRecoveryCodes(userId)
+      Recovery -> DB : INSERT hashed recovery_codes
+      DB --> Recovery : OK
+      Recovery --> MFA : Plain recovery codes
+      MFA -> DB : UPDATE mfa_profile\nstatus = ENABLED
+      MFA -> DB : INSERT audit_log (MFA_ENABLED)
+      MFA --> FE : 200 OK + recoveryCodes
+      FE --> User : Hiển thị mã khôi phục và trạng thái thành công
+    end
+
+  else Disable MFA
+    User -> FE : Chọn "Tắt MFA"
+    FE -> Auth : reauthenticate(password)
+    Auth -> DB : SELECT password_hash
+    DB --> Auth : passwordHash
+    Auth -> Auth : bcrypt.compare(password, passwordHash)
+
+    alt Mật khẩu sai
+      Auth --> FE : 401 Password invalid
+      FE --> User : Thông báo xác thực lại thất bại
+    else Mật khẩu đúng
+      Auth --> FE : OK
+      FE --> User : Yêu cầu nhập TOTP hoặc recovery code
+      User -> FE : Nhập mã xác thực
+      FE -> MFA : disableMfa(userId, code)
+      MFA -> DB : SELECT mfa_profile/recovery_codes
+      DB --> MFA : MFA data
+      MFA -> MFA : Xác thực TOTP hoặc recovery code
+
+      alt Mã xác thực không hợp lệ
+        MFA -> DB : INSERT audit_log (MFA_DISABLE_FAILED)
+        MFA --> FE : 401 Invalid MFA code
+        FE --> User : Thông báo mã không hợp lệ
+      else Mã xác thực hợp lệ
+        MFA -> DB : UPDATE mfa_profile\nstatus = DISABLED, secret = null
+        MFA -> DB : DELETE recovery_codes WHERE user_id = userId
+        MFA -> DB : INSERT audit_log (MFA_DISABLED)
+        MFA --> FE : 200 OK
+        FE --> User : Hiển thị MFA đã tắt
+      end
+    end
+  end
+end
+
+@enduml

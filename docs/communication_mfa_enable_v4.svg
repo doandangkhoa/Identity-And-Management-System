@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1320" height="760" viewBox="0 0 1320 760">
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#111" /></marker></defs>
+<style>
+.frame,.object,.db{fill:#fff;stroke:#111;stroke-width:1.2}.line{stroke:#111;stroke-width:1.2;fill:none;marker-end:url(#arrow)}.reply{stroke:#111;stroke-width:1.2;fill:none;stroke-dasharray:6 5;marker-end:url(#arrow)}
+text{font-family:Arial,Helvetica,sans-serif;font-size:14px;fill:#111}.title{font-size:18px;font-weight:700}.frame-title,.obj-title{font-size:14px;font-weight:700}.label{font-size:13px}
+</style>
+<text class="title" x="660" y="28" text-anchor="middle">
+<tspan x="660" dy="0">5.3.7. S&#x1A1; &#x111;&#x1ED3; giao ti&#x1EBF;p - Enable MFA</tspan>
+</text>
+<rect class="frame" x="25" y="55" width="1270" height="675"/>
+<path class="frame" d="M25,55 H238 L222,82 H25 Z"/>
+<text class="frame-title" x="35" y="74" text-anchor="start">
+<tspan x="35" dy="0">Interaction Enable MFA</tspan>
+</text>
+<g><circle class="object" cx="90" cy="330" r="11"/><line class="object" x1="90" y1="341" x2="90" y2="378"/><line class="object" x1="65" y1="355" x2="115" y2="355"/><line class="object" x1="90" y1="378" x2="68" y2="408"/><line class="object" x1="90" y1="378" x2="112" y2="408"/><text class="obj-title" x="90" y="434" text-anchor="middle">
+<tspan x="90" dy="0">Ng&#x1B0;&#x1EDD;i d&#xF9;ng</tspan>
+</text></g>
+<rect class="object" x="245" y="310" width="145" height="60"/>
+<text class="obj-title" x="317.5" y="345.0" text-anchor="middle">
+<tspan x="317.5" dy="0">: Frontend</tspan>
+</text>
+<rect class="object" x="520" y="120" width="165" height="65"/>
+<text class="obj-title" x="602.5" y="157.5" text-anchor="middle">
+<tspan x="602.5" dy="0">: AuthService</tspan>
+</text>
+<rect class="object" x="520" y="350" width="170" height="75"/>
+<text class="obj-title" x="605.0" y="392.5" text-anchor="middle">
+<tspan x="605.0" dy="0">: MFAService</tspan>
+</text>
+<rect class="object" x="820" y="500" width="230" height="70"/>
+<text class="obj-title" x="935.0" y="540.0" text-anchor="middle">
+<tspan x="935.0" dy="0">: RecoveryCodeService</tspan>
+</text>
+<path class="db" d="M1110,268 C1110,244 1255,244 1255,268 L1255,327 C1255,351 1110,351 1110,327 Z"/>
+<ellipse class="db" cx="1182.5" cy="268" rx="72.5" ry="18"/>
+<text class="obj-title" x="1182.5" y="312.5" text-anchor="middle">
+<tspan x="1182.5" dy="0">Database</tspan>
+</text>
+<polyline class="line" points="120,365 245,340"/>
+<text class="label" x="180" y="320" text-anchor="middle">
+<tspan x="180" dy="0">1. Ch&#x1ECD;n B&#x1EAD;t MFA</tspan>
+</text>
+<polyline class="line" points="390,320 520,152"/>
+<text class="label" x="455" y="230" text-anchor="middle">
+<tspan x="455" dy="0">2. Validate session</tspan>
+</text>
+<polyline class="line" points="685,152 1110,275"/>
+<text class="label" x="900" y="190" text-anchor="middle">
+<tspan x="900" dy="0">3. Load session</tspan>
+</text>
+<polyline class="line" points="390,350 520,380"/>
+<text class="label" x="455" y="405" text-anchor="middle">
+<tspan x="455" dy="0">4. startMfaSetup()</tspan>
+</text>
+<polyline class="line" points="690,370 1090,300 1110,300"/>
+<text class="label" x="890" y="330" text-anchor="middle">
+<tspan x="890" dy="0">5. L&#x1B0;u mfa_pending</tspan>
+</text>
+<polyline class="reply" points="520,355 470,295 390,310"/>
+<text class="label" x="455" y="285" text-anchor="middle">
+<tspan x="455" dy="0">6. Tr&#x1EA3; QR + Secret Key</tspan>
+</text>
+<polyline class="line" points="120,390 245,360"/>
+<text class="label" x="180" y="415" text-anchor="middle">
+<tspan x="180" dy="0">7. Nh&#x1EAD;p m&#xE3; TOTP</tspan>
+</text>
+<polyline class="line" points="390,365 520,405"/>
+<text class="label" x="455" y="455" text-anchor="middle">
+<tspan x="455" dy="0">8. verifySetupCode()</tspan>
+</text>
+<polyline class="line" points="690,405 820,535"/>
+<text class="label" x="760" y="485" text-anchor="middle">
+<tspan x="760" dy="0">9. Sinh recovery codes</tspan>
+</text>
+<polyline class="line" points="1050,535 1095,535 1135,345"/>
+<text class="label" x="1095" y="520" text-anchor="middle">
+<tspan x="1095" dy="0">10. L&#x1B0;u hash codes</tspan>
+</text>
+<polyline class="line" points="690,390 760,390 760,455 1095,455 1145,345"/>
+<text class="label" x="930" y="438" text-anchor="middle">
+<tspan x="930" dy="0">11. ENABLED + audit log</tspan>
+</text>
+<polyline class="reply" points="520,425 455,615 318,615 318,370"/>
+<text class="label" x="455" y="642" text-anchor="middle">
+<tspan x="455" dy="0">12. Tr&#x1EA3; m&#xE3; kh&#xF4;i ph&#x1EE5;c</tspan>
+</text>
+</svg>

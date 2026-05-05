@@ -1,0 +1,65 @@
+@startuml UC_API_ClientApp_Call_API
+
+title ClientApp -> API
+
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+skinparam shadowing false
+skinparam sequence {
+  ArrowColor #2C3E50
+  ActorBorderColor #2C3E50
+  LifeLineBorderColor #2C3E50
+  ParticipantBorderColor #2C3E50
+  ParticipantBackgroundColor #ECF0F1
+  ActorBackgroundColor #ECF0F1
+}
+
+participant "ClientApplication" as Client
+participant "API Gateway" as Gateway
+participant "AuthService" as Auth
+participant "MFAService" as MFA
+participant "ResourceService" as Resource
+participant "AuditService" as Audit
+database "Database" as DB
+
+Client -> Gateway : GET /api/user/profile\nAuthorization: Bearer accessToken
+Gateway -> Auth : validateToken(accessToken)
+Auth -> Auth : Kiểm tra chữ ký, issuer,\naudience và hạn dùng JWT
+
+alt Token không hợp lệ hoặc hết hạn
+  Auth --> Gateway : invalid
+  Gateway --> Client : 401 Unauthorized
+else Token hợp lệ
+  Auth -> DB : SELECT user_session\nWHERE session_id = token.sessionId
+  DB --> Auth : UserSession
+
+  alt Session không hoạt động
+    Auth --> Gateway : inactive session
+    Gateway --> Client : 401 Unauthorized
+  else Session hoạt động
+    Auth -> DB : SELECT user WHERE id = token.userId
+    DB --> Auth : User profile + roles
+    Auth --> Gateway : userContext
+
+    Gateway -> MFA : checkMfaRequirement(endpoint, userContext)
+    MFA -> DB : Load SecurityPolicy/MfaProfile
+    DB --> MFA : Policy + MFA state
+
+    alt Endpoint yêu cầu MFA nhưng claim chưa xác thực
+      MFA --> Gateway : mfaRequiredNotSatisfied
+      Gateway --> Client : 403 Forbidden
+    else Được phép truy cập
+      MFA --> Gateway : allowed
+      Gateway -> Resource : forwardRequest(userContext)
+      Resource -> DB : Truy vấn dữ liệu nghiệp vụ
+      DB --> Resource : Resource data
+      Resource -> Audit : recordApiAccess(clientId, userId, endpoint)
+      Audit -> DB : INSERT audit_log
+      DB --> Audit : OK
+      Resource --> Gateway : 200 Resource data
+      Gateway --> Client : 200 OK + JSON body
+    end
+  end
+end
+
+@enduml

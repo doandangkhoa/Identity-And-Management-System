@@ -1,0 +1,82 @@
+@startuml activity_mfa_05_06_07_verify
+
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam activity {
+  BackgroundColor #F8FAFC
+  BorderColor #2C3E50
+  ArrowColor #2C3E50
+  DiamondBackgroundColor #FFFFFF
+  DiamondBorderColor #2C3E50
+}
+
+title UC-MFA-05/06/07: Xác thực TOTP, Recovery Code
+
+|Hệ thống|
+start
+:Nhận yêu cầu xác thực MFA\ntừ đăng nhập hoặc tắt MFA;
+:Hiển thị các phương thức\nxác thực khả dụng;
+
+|Người dùng|
+:Chọn phương thức xác thực;
+
+if (Phương thức?) then (TOTP)
+  :Nhập mã TOTP 6 số;
+
+  |Hệ thống|
+  :Lấy Secret Key của tài khoản;
+  :Sinh mã TOTP nội bộ\ntrong cửa sổ thời gian ±30 giây;
+  :So khớp mã người dùng nhập\nvới mã nội bộ;
+
+  if (Mã TOTP khớp?) then (Không)
+    :Trả kết quả\nMFA không hợp lệ;
+    |Người dùng|
+    :Xem thông báo mã sai\nhoặc hết hạn;
+    stop
+  else (Có)
+  endif
+
+  |Hệ thống|
+  :Kiểm tra timeStep\nchưa từng được dùng;
+
+  if (Có replay?) then (Có)
+    :Từ chối xác thực\nchống Replay Attack;
+    |Người dùng|
+    :Xem thông báo mã\nđã được sử dụng;
+    stop
+  else (Không)
+    |Hệ thống|
+    :Lưu lastUsedTimeStep;
+  endif
+
+else (Recovery Code)
+  :Nhập mã khôi phục;
+
+  |Hệ thống|
+  :Lấy danh sách mã khôi phục\nđã hash;
+  :So khớp mã nhập vào\nvới danh sách mã còn hiệu lực;
+
+  if (Mã khôi phục hợp lệ?) then (Không)
+    :Trả kết quả\nMFA không hợp lệ;
+    |Người dùng|
+    :Xem thông báo mã\nkhông hợp lệ hoặc đã dùng;
+    stop
+  else (Có)
+  endif
+
+  |Hệ thống|
+  :Đánh dấu mã khôi phục\nlà đã sử dụng;
+
+  if (Là mã khôi phục cuối cùng?) then (Có)
+    :Cảnh báo cần tạo\nbộ mã mới;
+  else (Không)
+  endif
+endif
+
+|Hệ thống|
+:Trả kết quả\nMFA hợp lệ;
+:Ghi audit log\nMFA_VERIFIED;
+stop
+
+@enduml

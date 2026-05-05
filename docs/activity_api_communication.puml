@@ -1,0 +1,81 @@
+@startuml activity_api_communication
+
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam activity {
+  BackgroundColor #F8FAFC
+  BorderColor #2C3E50
+  ArrowColor #2C3E50
+  DiamondBackgroundColor #FFFFFF
+  DiamondBorderColor #2C3E50
+}
+
+title API Communication
+
+|Client Application|
+start
+:Gửi API Request\nkèm Access Token;
+
+|API Gateway|
+:Tiếp nhận request;
+:Trích xuất token\ntrong Header;
+:Xác minh chữ ký\nvà định dạng token;
+
+if (Token valid?) then (No)
+  :HTTP 401 Unauthorized;
+  |Client Application|
+  :Nhận lỗi 401;
+  stop
+else (Yes)
+endif
+
+|API Gateway|
+:Kiểm tra thời hạn token;
+
+if (Expired?) then (Yes)
+  :HTTP 401 Unauthorized;
+  |Client Application|
+  :Nhận lỗi 401;
+  stop
+else (No)
+endif
+
+|MFA Service|
+:Kiểm tra tài nguyên\ncó yêu cầu MFA không;
+
+if (MFA required?) then (Yes)
+  :Kiểm tra claim\nmfa_verified;
+
+  if (Đã xác thực MFA?) then (No)
+    |API Gateway|
+    :HTTP 403 Forbidden;
+    |Client Application|
+    :Nhận lỗi 403;
+    stop
+  else (Yes)
+  endif
+else (No)
+endif
+
+|Database|
+:Truy vấn hồ sơ\nngười dùng theo userId;
+
+if (Tìm thấy dữ liệu?) then (No)
+  |API Gateway|
+  :HTTP 404 Not Found;
+  |Client Application|
+  :Nhận lỗi 404;
+  stop
+else (Yes)
+endif
+
+|API Gateway|
+:Đóng gói dữ liệu JSON;
+:HTTP 200 OK;
+
+|Client Application|
+:Nhận dữ liệu người dùng;
+stop
+
+@enduml

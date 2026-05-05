@@ -1,0 +1,32 @@
+@startuml communication_api_validate_token
+
+title Sơ đồ giao tiếp - API validate token
+
+top to bottom direction
+skinparam shadowing false
+skinparam linetype ortho
+skinparam nodesep 80
+skinparam ranksep 85
+skinparam rectangle {
+  BorderColor #333333
+  BackgroundColor #FFFFFF
+  FontName Arial
+  FontSize 12
+}
+
+rectangle "ClientApplication\n1. API request + token\n8. Nhận HTTP response" as client
+rectangle "API Gateway\n2. validateToken()\n7. Nhận userContext" as gateway
+rectangle "AuthService\n3. Giải mã JWT\n6. Load user profile" as auth
+rectangle "MFAService\n5. Kiểm tra MFA\n5.1. Load MFA profile" as mfa
+rectangle "SessionService\n4. Kiểm tra session\n4.1. Load session" as session
+database "Database" as db
+
+client --> gateway
+gateway --> auth
+auth --> session
+session --> db
+auth --> mfa
+mfa --> db
+auth --> db
+
+@enduml

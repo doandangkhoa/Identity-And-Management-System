@@ -1,0 +1,39 @@
+@startuml communication_mfa_enable
+
+title 5.3.7. Sơ đồ giao tiếp - Enable MFA
+
+left to right direction
+skinparam shadowing false
+skinparam linetype ortho
+skinparam nodesep 90
+skinparam ranksep 90
+skinparam rectangle {
+  BorderColor #333333
+  BackgroundColor #FFFFFF
+  FontName Arial
+  FontSize 12
+}
+
+frame "Interaction Enable MFA" {
+  actor "Người dùng" as user
+  rectangle ": Frontend" as fe
+  rectangle ": AuthService" as auth
+  rectangle ": MFAService" as mfa
+  rectangle ": RecoveryCodeService" as recovery
+  database "Database" as db
+
+  user -right-> fe : 1. Chọn Bật MFA
+  fe -right-> auth : 2. Validate session
+  auth -right-> db : 3. Load session
+  fe -down-> mfa : 4. startMfaSetup()
+  mfa -right-> db : 5. Lưu mfa_pending
+  mfa ..up..> fe : 6. Trả QR + Secret Key
+  user -right-> fe : 7. Nhập mã TOTP
+  fe -down-> mfa : 8. verifySetupCode()
+  mfa -down-> recovery : 9. Sinh recovery codes
+  recovery -right-> db : 10. Lưu hash codes
+  mfa -right-> db : 11. ENABLED + audit log
+  mfa ..up..> fe : 12. Trả mã khôi phục
+}
+
+@enduml

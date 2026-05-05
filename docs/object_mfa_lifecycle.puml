@@ -1,0 +1,61 @@
+@startuml object_mfa_lifecycle
+
+title Sơ đồ đối tượng: MFA Lifecycle
+
+top to bottom direction
+skinparam shadowing false
+skinparam linetype ortho
+skinparam nodesep 70
+skinparam ranksep 65
+skinparam object {
+  BorderColor #333333
+  BackgroundColor #FFFFFF
+  FontName Arial
+  FontSize 12
+}
+
+object "u: User" as u {
+  id = "20235330"
+  username = "hieu"
+  email = "hieu.vtm235330@sis.hust.edu.vn"
+  passwordHash = "$argon2id$v=19$m=65536..."
+  failedLoginAttempts = 0
+  status = Active
+  lastLoginAt = 2026-04-28 20:00:00
+  passwordChangedAt = 2025-10-10 10:00:00
+  createdAt = 2024-09-05 08:30:00
+  updatedAt = 2026-04-28 22:05:00
+}
+
+object "mfa_profile_01: MfaProfile" as mfa_profile_01 {
+  id = "MFA-9999"
+  userId = "20235330"
+  secretKeyEncrypted = "x8f9...3kdj"
+  isVerified = true
+  lastVerifiedAt = 2026-04-28 22:05:00
+  createdAt = 2025-11-01 14:00:00
+}
+
+object "rc_01: RecoveryCode" as rc_01 {
+  id = "RC-1001"
+  mfaProfileId = "MFA-9999"
+  codeHash = "hash_val_1"
+  isUsed = false
+  usedAt = null
+  createdAt = 2025-11-01 14:05:00
+}
+
+object "rc_02: RecoveryCode" as rc_02 {
+  id = "RC-1002"
+  mfaProfileId = "MFA-9999"
+  codeHash = "hash_val_2"
+  isUsed = true
+  usedAt = 2026-04-28 15:30:00
+  createdAt = 2025-11-01 14:05:00
+}
+
+u -- mfa_profile_01 : owns
+mfa_profile_01 -- rc_01 : contains
+mfa_profile_01 -- rc_02 : contains
+
+@enduml

@@ -1,0 +1,53 @@
+@startuml object_auth_session_management
+
+title 4.3.1. Authentication & Session Management
+
+left to right direction
+skinparam shadowing false
+skinparam linetype ortho
+skinparam nodesep 80
+skinparam ranksep 60
+skinparam object {
+  BorderColor #333333
+  BackgroundColor #FFFFFF
+  FontName Arial
+  FontSize 12
+}
+
+object "u: User" as u {
+  id = "2023506"
+  username = "Ducnx"
+  email = "duc.nx235046@sis.hust.edu.vn"
+  passwordHashed = "fvdbvdbc"
+  failedLoginAttempts = 0
+  status = Active
+  createdAt = 2020-12-12 16:00:00
+  updatedAt = 2025-10-11 22:00:00
+}
+
+object "session_01: UserSession" as session_01 {
+  id = "S-9999"
+  userID = "20235046"
+  clientAppID = "ZLP"
+  accessToken = "eyJhbGciOiJIUzI1..."
+  refreshToken = "def5020054c25..."
+  ipAddress = 192.168.1.15
+  deviceInfo = "Chrome on Windows 11"
+  expiredAt = 2025-10-12 07:00:00
+  isRevoked = false
+  createdAt = 2025-10-11 21:56:00
+}
+
+object "log_01: AuditLog" as log_01 {
+  id = "AL-9999"
+  userID = "20235046"
+  action = LOGIN
+  detail = "dang nhap thanh cong"
+  ipAddress = "192.168.1.15"
+  timestamp = 2025-10-11 21:56:00
+}
+
+u -- session_01 : owns
+u -- log_01 : generates
+
+@enduml

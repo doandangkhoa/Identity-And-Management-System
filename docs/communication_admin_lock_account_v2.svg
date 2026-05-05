@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="650" viewBox="0 0 1180 650">
+<defs>
+  <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#111" /></marker>
+</defs>
+<style>
+  .frame,.object,.db{fill:#fff;stroke:#111;stroke-width:1.2}.line{stroke:#111;stroke-width:1.2;fill:none;marker-end:url(#arrow)}.reply{stroke:#111;stroke-width:1.2;fill:none;stroke-dasharray:6 5;marker-end:url(#arrow)}
+  text{font-family:Arial,Helvetica,sans-serif;font-size:14px;fill:#111}.title{font-size:18px;font-weight:700}.frame-title,.obj-title{font-size:14px;font-weight:700}.label{font-size:13px}
+</style>
+<text class="title" x="590.0" y="28" text-anchor="middle">
+<tspan x="590.0" dy="0">5.3.3. S&#x1A1; &#x111;&#x1ED3; giao ti&#x1EBF;p - Admin lock account</tspan>
+</text>
+<rect class="frame" x="25" y="50" width="1130" height="575"/>
+<path class="frame" d="M25,50 H300 L284,76 H25 Z"/>
+<text class="frame-title" x="35" y="68" text-anchor="start">
+<tspan x="35" dy="0">Interaction Admin lock account</tspan>
+</text>
+<g id="admin"><circle class="object" cx="85" cy="295" r="11"/><line class="object" x1="85" y1="306" x2="85" y2="343"/><line class="object" x1="60" y1="320" x2="110" y2="320"/><line class="object" x1="85" y1="343" x2="63" y2="373"/><line class="object" x1="85" y1="343" x2="107" y2="373"/><text class="obj-title" x="85" y="397" text-anchor="middle">
+<tspan x="85" dy="0">System Admin</tspan>
+</text></g>
+<rect class="object" id="userSvc" x="270" y="280" width="160" height="70"/>
+<text class="obj-title" x="350.0" y="320.0" text-anchor="middle">
+<tspan x="350.0" dy="0">: UserService</tspan>
+</text>
+<rect class="object" id="sessionSvc" x="520" y="420" width="170" height="65"/>
+<text class="obj-title" x="605.0" y="457.5" text-anchor="middle">
+<tspan x="605.0" dy="0">: SessionService</tspan>
+</text>
+<rect class="object" id="audit" x="520" y="115" width="180" height="65"/>
+<text class="obj-title" x="610.0" y="152.5" text-anchor="middle">
+<tspan x="610.0" dy="0">: AuditLogService</tspan>
+</text>
+<rect class="object" id="email" x="810" y="420" width="150" height="65"/>
+<text class="obj-title" x="885.0" y="457.5" text-anchor="middle">
+<tspan x="885.0" dy="0">: EmailAgent</tspan>
+</text>
+<path class="db" id="db" d="M940,253 C940,229 1070,229 1070,253 L1070,302 C1070,326 940,326 940,302 Z"/>
+<ellipse class="db" cx="1005.0" cy="253" rx="65.0" ry="18"/>
+<text class="obj-title" x="1005.0" y="292.5" text-anchor="middle">
+<tspan x="1005.0" dy="0">Database</tspan>
+</text>
+<line class="line" x1="115" y1="332" x2="270" y2="315"/>
+<text class="label" x="195" y="298" text-anchor="middle">
+<tspan x="195" dy="0">1. POST /admin/users/{id}/lock</tspan>
+</text>
+<line class="line" x1="430" y1="300" x2="940" y2="270"/>
+<text class="label" x="685" y="250" text-anchor="middle">
+<tspan x="685" dy="0">2. Truy v&#x1EA5;n t&#xE0;i kho&#x1EA3;n</tspan>
+</text>
+<line class="reply" x1="940" y1="300" x2="430" y2="330"/>
+<text class="label" x="685" y="355" text-anchor="middle">
+<tspan x="685" dy="0">3. Th&#xF4;ng tin User</tspan>
+</text>
+<line class="line" x1="430" y1="315" x2="940" y2="315"/>
+<text class="label" x="685" y="300" text-anchor="middle">
+<tspan x="685" dy="0">4. status = LOCKED</tspan>
+</text>
+<line class="line" x1="430" y1="350" x2="520" y2="445"/>
+<text class="label" x="475" y="405" text-anchor="middle">
+<tspan x="475" dy="0">5. Thu h&#x1ED3;i to&#xE0;n b&#x1ED9; phi&#xEA;n</tspan>
+</text>
+<line class="line" x1="690" y1="455" x2="965" y2="330"/>
+<text class="label" x="810" y="420" text-anchor="middle">
+<tspan x="810" dy="0">6. Deactivate sessions</tspan>
+</text>
+<line class="line" x1="430" y1="280" x2="520" y2="150"/>
+<text class="label" x="470" y="205" text-anchor="middle">
+<tspan x="470" dy="0">7. Ghi log USER_LOCKED</tspan>
+</text>
+<line class="line" x1="700" y1="150" x2="965" y2="250"/>
+<text class="label" x="820" y="190" text-anchor="middle">
+<tspan x="820" dy="0">8. L&#x1B0;u audit log</tspan>
+</text>
+<line class="line" x1="430" y1="350" x2="810" y2="450"/>
+<text class="label" x="620" y="405" text-anchor="middle">
+<tspan x="620" dy="0">9. G&#x1EED;i email th&#xF4;ng b&#xE1;o</tspan>
+</text>
+<line class="reply" x1="270" y1="350" x2="115" y2="350"/>
+<text class="label" x="190" y="373" text-anchor="middle">
+<tspan x="190" dy="0">10. HTTP 200 OK</tspan>
+</text>
+</svg>

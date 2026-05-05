@@ -1,0 +1,103 @@
+@startuml UC_AUTH_01_Login
+
+title UC-AUTH-01: Login
+
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+skinparam shadowing false
+skinparam sequence {
+  ArrowColor #2C3E50
+  ActorBorderColor #2C3E50
+  LifeLineBorderColor #2C3E50
+  ParticipantBorderColor #2C3E50
+  ParticipantBackgroundColor #ECF0F1
+  ActorBackgroundColor #ECF0F1
+}
+
+actor "Người dùng" as User
+participant "Frontend" as FE
+participant "AuthService" as Auth
+participant "MFAService" as MFA
+participant "SessionService" as Session
+database "Database" as DB
+
+User -> FE : Nhập username + password
+FE -> Auth : POST /auth/login {username, password}
+
+Auth -> DB : Tìm user theo username
+
+alt User không tồn tại
+  DB --> Auth : null
+  Auth --> FE : 401 User không tồn tại
+  FE --> User : Thông báo lỗi
+else User tồn tại
+  DB --> Auth : User
+
+  alt Tài khoản bị khoá (status = LOCKED)
+    Auth --> FE : 403 Tài khoản bị khoá
+    FE --> User : Thông báo tài khoản bị khoá
+  else Tài khoản hợp lệ
+    Auth -> Auth : bcrypt.compare(password, passwordHash)
+
+    alt Sai mật khẩu
+      Auth -> DB : UPDATE user SET failedLoginAttempts += 1
+
+      alt failedLoginAttempts >= maxLoginAttempts
+        Auth -> DB : UPDATE user SET status = LOCKED
+        Auth -> DB : INSERT audit_log (USER_LOCKED)
+        Auth --> FE : 403 Tài khoản bị khoá do nhập sai quá nhiều lần
+        FE --> User : Thông báo tài khoản bị khoá
+      else Chưa đạt giới hạn
+        Auth --> FE : 401 Sai mật khẩu
+        FE --> User : Thông báo sai mật khẩu
+      end
+
+    else Đúng mật khẩu
+      Auth -> DB : UPDATE user SET failedLoginAttempts = 0
+
+      Auth -> MFA : checkMFAStatus(userId)
+      MFA --> Auth : mfaEnabled
+
+      alt MFA đã bật (mfaEnabled = true)
+        Auth --> FE : 200 {mfaRequired: true, tempToken}
+        FE --> User : Yêu cầu nhập mã TOTP
+
+        User -> FE : Nhập mã TOTP
+        FE -> MFA : POST /mfa/verify {tempToken, code}
+
+        MFA -> DB : Lấy secret, xác thực HMAC-SHA1
+
+        alt Mã OTP sai hoặc hết hạn
+          DB --> MFA : invalid
+          MFA --> FE : 401 Mã OTP không hợp lệ
+          FE --> User : Thông báo mã OTP sai
+        else Mã OTP hợp lệ
+          DB --> MFA : valid
+          MFA --> Auth : Xác thực thành công
+
+          Auth -> Session : createSession(userId, deviceInfo)
+          Session -> DB : INSERT user_session
+          Session --> Auth : {accessToken, refreshToken}
+
+          Auth -> DB : INSERT audit_log (LOGIN)
+
+          Auth --> FE : 200 {accessToken, refreshToken}
+          FE --> User : Đăng nhập thành công
+        end
+
+      else MFA chưa bật (mfaEnabled = false)
+        Auth -> Session : createSession(userId, deviceInfo)
+        Session -> DB : INSERT user_session
+        Session --> Auth : {accessToken, refreshToken}
+
+        Auth -> DB : INSERT audit_log (LOGIN)
+
+        Auth --> FE : 200 {accessToken, refreshToken}
+        FE --> User : Đăng nhập thành công
+      end
+
+    end
+  end
+end
+
+@enduml

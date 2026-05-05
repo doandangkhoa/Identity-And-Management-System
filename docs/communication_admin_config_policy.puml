@@ -1,0 +1,39 @@
+@startuml communication_admin_config_policy
+
+title 5.3.6. Sơ đồ giao tiếp - Admin config policy
+
+left to right direction
+skinparam shadowing false
+skinparam linetype ortho
+skinparam nodesep 90
+skinparam ranksep 90
+skinparam rectangle {
+  BorderColor #333333
+  BackgroundColor #FFFFFF
+  FontName Arial
+  FontSize 12
+}
+
+frame "Interaction Admin config policy" {
+  actor "System Admin" as admin
+  rectangle ": Admin UI" as ui
+  rectangle ": AuthService" as auth
+  rectangle ": PolicyService" as policy
+  rectangle ": AuditLogService" as audit
+  database "Database" as db
+
+  admin -right-> ui : 1. Mở cấu hình policy
+  ui -right-> auth : 2. Validate admin token
+  auth -right-> db : 3. Load quyền admin
+  ui -down-> policy : 4. getCurrentPolicy()
+  policy -right-> db : 5. SELECT security_policy
+  db ..left..> policy : 6. Policy hiện tại
+  admin -right-> ui : 7. Cập nhật tham số
+  ui -down-> policy : 8. updatePolicy(payload)
+  policy -right-> db : 9. UPDATE security_policy
+  policy -up-> audit : 10. Ghi log POLICY_UPDATED
+  audit -right-> db : 11. Lưu audit log
+  policy ..up..> ui : 12. HTTP 200 OK
+}
+
+@enduml

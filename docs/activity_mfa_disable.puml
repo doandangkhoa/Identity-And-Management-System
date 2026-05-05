@@ -1,0 +1,46 @@
+@startuml activity_mfa_02_disable
+
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam activity {
+  BackgroundColor #F8FAFC
+  BorderColor #2C3E50
+  ArrowColor #2C3E50
+  DiamondBackgroundColor #FFFFFF
+  DiamondBorderColor #2C3E50
+}
+
+title UC-MFA-02: Tắt xác thực đa yếu tố
+
+|Người dùng|
+start
+:Chọn chức năng\nTắt MFA;
+:Nhập mật khẩu hiện tại\nvà mã xác thực;
+
+|Hệ thống|
+:Xác thực lại\nmật khẩu hiện tại;
+:UC-MFA-02 include\nAuthenticate MFA (UC-MFA-05);
+:Kiểm tra mã TOTP\nhoặc mã khôi phục;
+
+if (Xác thực hợp lệ?) then (Không hợp lệ)
+  :Từ chối tắt MFA;
+  :Ghi audit log\nMFA_DISABLE_FAILED;
+  |Người dùng|
+  :Xem thông báo lỗi;
+  stop
+else (Hợp lệ)
+endif
+
+|Hệ thống|
+:Xóa Secret Key;
+:Xóa toàn bộ mã\nkhôi phục liên quan;
+:Cập nhật trạng thái\nMFA thành Tắt;
+:Ghi audit log\nMFA_DISABLED;
+:Thông báo vô hiệu hóa\nthành công;
+
+|Người dùng|
+:Xem thông báo\nthiết lập thành công;
+stop
+
+@enduml

@@ -1,0 +1,24 @@
+@startuml
+left to right direction
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+
+rectangle "API Communication" {
+
+  usecase "Verify Token" as UC1
+  usecase "Get User Profile" as UC2
+}
+
+actor "<<System>>\nClient Application" as Client
+
+' ===== Actor =====
+Client -- UC1
+
+' ===== Include =====
+UC2 ..> UC1 : <<include>>
+
+' ===== Layout ép giống hình =====
+UC1 -[hidden]down- UC2
+
+@enduml

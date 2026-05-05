@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1050" height="540" viewBox="0 0 1050 540">
+<defs>
+  <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#111" /></marker>
+</defs>
+<style>
+  .frame,.object,.db{fill:#fff;stroke:#111;stroke-width:1.2}.line{stroke:#111;stroke-width:1.2;fill:none;marker-end:url(#arrow)}.reply{stroke:#111;stroke-width:1.2;fill:none;stroke-dasharray:6 5;marker-end:url(#arrow)}
+  text{font-family:Arial,Helvetica,sans-serif;font-size:14px;fill:#111}.title{font-size:18px;font-weight:700}.frame-title,.obj-title{font-size:14px;font-weight:700}.label{font-size:13px}
+</style>
+<text class="title" x="525.0" y="28" text-anchor="middle">
+<tspan x="525.0" dy="0">5.3.2. S&#x1A1; &#x111;&#x1ED3; giao ti&#x1EBF;p - Logout</tspan>
+</text>
+<rect class="frame" x="25" y="50" width="1000" height="465"/>
+<path class="frame" d="M25,50 H204 L188,76 H25 Z"/>
+<text class="frame-title" x="35" y="68" text-anchor="start">
+<tspan x="35" dy="0">Interaction Logout</tspan>
+</text>
+<g id="u"><circle class="object" cx="85" cy="225" r="11"/><line class="object" x1="85" y1="236" x2="85" y2="273"/><line class="object" x1="60" y1="250" x2="110" y2="250"/><line class="object" x1="85" y1="273" x2="63" y2="303"/><line class="object" x1="85" y1="273" x2="107" y2="303"/><text class="obj-title" x="85" y="327" text-anchor="middle">
+<tspan x="85" dy="0">Ng&#x1B0;&#x1EDD;i d&#xF9;ng</tspan>
+</text></g>
+<rect class="object" id="fe" x="220" y="245" width="135" height="55"/>
+<text class="obj-title" x="287.5" y="277.5" text-anchor="middle">
+<tspan x="287.5" dy="0">: Frontend</tspan>
+</text>
+<rect class="object" id="auth" x="455" y="235" width="150" height="65"/>
+<text class="obj-title" x="530.0" y="272.5" text-anchor="middle">
+<tspan x="530.0" dy="0">: AuthService</tspan>
+</text>
+<rect class="object" id="session" x="690" y="235" width="165" height="65"/>
+<text class="obj-title" x="772.5" y="272.5" text-anchor="middle">
+<tspan x="772.5" dy="0">: SessionService</tspan>
+</text>
+<path class="db" id="db" d="M900,238 C900,214 1020,214 1020,238 L1020,287 C1020,311 900,311 900,287 Z"/>
+<ellipse class="db" cx="960.0" cy="238" rx="60.0" ry="18"/>
+<text class="obj-title" x="960.0" y="277.5" text-anchor="middle">
+<tspan x="960.0" dy="0">Database</tspan>
+</text>
+<line class="line" x1="115" y1="262" x2="220" y2="262"/>
+<text class="label" x="165" y="246" text-anchor="middle">
+<tspan x="165" dy="0">1. Nh&#x1EA5;n &#x110;&#x103;ng xu&#x1EA5;t</tspan>
+</text>
+<line class="line" x1="355" y1="272" x2="455" y2="272"/>
+<text class="label" x="405" y="255" text-anchor="middle">
+<tspan x="405" dy="0">2. POST /auth/logout</tspan>
+</text>
+<line class="line" x1="605" y1="265" x2="690" y2="265"/>
+<text class="label" x="650" y="248" text-anchor="middle">
+<tspan x="650" dy="0">3. revokeSession()</tspan>
+</text>
+<line class="line" x1="855" y1="265" x2="900" y2="260"/>
+<text class="label" x="875" y="238" text-anchor="middle">
+<tspan x="875" dy="0">4. isActive = false</tspan>
+</text>
+<line class="line" x1="530" y1="300" x2="925" y2="315"/>
+<text class="label" x="715" y="340" text-anchor="middle">
+<tspan x="715" dy="0">5. Ghi audit log LOGOUT</tspan>
+</text>
+<line class="reply" x1="455" y1="300" x2="355" y2="300"/>
+<text class="label" x="405" y="320" text-anchor="middle">
+<tspan x="405" dy="0">6. HTTP 200 OK</tspan>
+</text>
+<line class="reply" x1="220" y1="300" x2="115" y2="300"/>
+<text class="label" x="168" y="325" text-anchor="middle">
+<tspan x="168" dy="0">7. Chuy&#x1EC3;n v&#x1EC1; Login</tspan>
+</text>
+</svg>

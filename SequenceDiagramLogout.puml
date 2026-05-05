@@ -1,0 +1,42 @@
+@startuml
+title Sequence Diagram - Logout
+
+actor User
+participant "Client App" as Client
+participant "Auth API" as API
+database DB
+participant "Audit Log" as Audit
+
+User -> Client: Click Logout
+Client -> API: POST /logout (token)
+
+API -> API: Verify token
+
+alt Token không hợp lệ
+    API -> Audit: Log logout_failed (invalid token)
+    API --> Client: 401 Unauthorized
+    Client --> User: Báo lỗi
+else Token hợp lệ
+    API -> DB: Find session by token
+    DB --> API: session | null
+
+    alt Session không tồn tại
+        API --> Client: 200 Already logged out
+        Client -> Client: Xóa token local
+        Client --> User: Redirect login
+    else Session tồn tại
+        API -> DB: Invalidate access token
+        DB --> API: OK
+
+        API -> DB: Revoke refresh token
+        DB --> API: OK
+
+        API -> Audit: Log logout_success (userId, timestamp)
+
+        API --> Client: 200 Logout success
+        Client -> Client: Xóa token local
+        Client --> User: Redirect login
+    end
+end
+
+@enduml

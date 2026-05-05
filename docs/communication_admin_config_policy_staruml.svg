@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1320" height="760" viewBox="0 0 1320 760">
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#111" /></marker></defs>
+<style>
+.frame,.object,.db,.actor-line{fill:#fff;stroke:#111;stroke-width:1.35}.line{stroke:#111;stroke-width:1.35;fill:none;marker-end:url(#arrow)}.reply{stroke:#111;stroke-width:1.35;fill:none;stroke-dasharray:7 5;marker-end:url(#arrow)}
+text{font-family:Arial,Helvetica,sans-serif;font-size:14px;fill:#111}.title{font-size:17px;font-weight:700;paint-order:stroke;stroke:#fff;stroke-width:4px;stroke-linejoin:round}.frame-title{font-size:14px}.keyword{font-weight:700}.obj-title{font-size:15px;font-weight:700}.label{font-size:13px;paint-order:stroke;stroke:#fff;stroke-width:5px;stroke-linejoin:round}
+</style>
+<text class="title" x="660.0" y="30" text-anchor="middle">
+<tspan x="660.0" dy="0">5.3.6. S&#417; &#273;&#7891; giao ti&#7871;p - Admin config policy</tspan>
+</text>
+<rect class="frame" x="50" y="55" width="1220" height="655"/>
+<path class="frame" d="M50,55 H320 L300,84 H50 Z"/>
+<text class="frame-title" x="62" y="76"><tspan class="keyword">interaction</tspan> Admin config policy</text>
+<circle class="actor-line" cx="125" cy="335" r="12"/>
+<line class="actor-line" x1="125" y1="347" x2="125" y2="390"/>
+<line class="actor-line" x1="97" y1="365" x2="153" y2="365"/>
+<line class="actor-line" x1="125" y1="390" x2="101" y2="423"/>
+<line class="actor-line" x1="125" y1="390" x2="149" y2="423"/>
+<text class="obj-title" x="125" y="450" text-anchor="middle">
+<tspan x="125" dy="0">: Qu&#7843;n tr&#7883; vi&#234;n</tspan>
+</text>
+<rect class="object" x="250" y="320" width="170" height="70"/>
+<text class="obj-title" x="335.0" y="360.0" text-anchor="middle">
+<tspan x="335.0" dy="0">: Admin UI</tspan>
+</text>
+<rect class="object" x="530" y="290" width="250" height="115"/>
+<text class="obj-title" x="655.0" y="352.5" text-anchor="middle">
+<tspan x="655.0" dy="0">: PolicyService</tspan>
+</text>
+<rect class="object" x="540" y="105" width="230" height="85"/>
+<text class="obj-title" x="655.0" y="152.5" text-anchor="middle">
+<tspan x="655.0" dy="0">: AuthService</tspan>
+</text>
+<rect class="object" x="540" y="565" width="230" height="85"/>
+<text class="obj-title" x="655.0" y="612.5" text-anchor="middle">
+<tspan x="655.0" dy="0">: AuditLogService</tspan>
+</text>
+<path class="db" d="M1070,314 C1070,290 1240,290 1240,314 L1240,395 C1240,419 1070,419 1070,395 Z"/>
+<ellipse class="db" cx="1155.0" cy="314" rx="85.0" ry="22"/>
+<text class="obj-title" x="1155.0" y="368.5" text-anchor="middle">
+<tspan x="1155.0" dy="0">Database</tspan>
+</text>
+<polyline class="line" points="153,345 250,345"/>
+<text class="label" x="205" y="314" text-anchor="middle">
+<tspan x="205" dy="0">1. M&#7903; c&#7845;u h&#236;nh ch&#237;nh</tspan>
+<tspan x="205" dy="17">s&#225;ch</tspan>
+</text>
+<polyline class="line" points="335,320 335,235 540,235 540,150"/>
+<text class="label" x="430" y="207" text-anchor="middle">
+<tspan x="430" dy="0">2. Validate admin</tspan>
+<tspan x="430" dy="17">token</tspan>
+</text>
+<polyline class="line" points="770,150 960,150 960,292 1070,292"/>
+<text class="label" x="978" y="218" text-anchor="start">
+<tspan x="978" dy="0">2.1. Load quy&#7873;n</tspan>
+</text>
+<polyline class="line" points="780,326 1070,326"/>
+<text class="label" x="925" y="310" text-anchor="middle">
+<tspan x="925" dy="0">3. SELECT policy</tspan>
+</text>
+<polyline class="reply" points="1070,360 780,360"/>
+<text class="label" x="925" y="378" text-anchor="middle">
+<tspan x="925" dy="0">4. Load policy</tspan>
+</text>
+<polyline class="line" points="420,342 530,342"/>
+<text class="label" x="475" y="327" text-anchor="middle">
+<tspan x="475" dy="0">5. S&#7917;a tham s&#7889;</tspan>
+</text>
+<polyline class="line" points="420,370 530,370"/>
+<text class="label" x="475" y="386" text-anchor="middle">
+<tspan x="475" dy="0">6. updatePolicy()</tspan>
+</text>
+<text class="label" x="655" y="275" text-anchor="middle">
+<tspan x="655" dy="0">7. Validate rules</tspan>
+</text>
+<polyline class="line" points="780,394 1070,394"/>
+<text class="label" x="925" y="424" text-anchor="middle">
+<tspan x="925" dy="0">8. UPDATE policy</tspan>
+</text>
+<polyline class="line" points="620,405 620,565"/>
+<text class="label" x="600" y="495" text-anchor="end">
+<tspan x="600" dy="0">9. Ghi nh&#7853;n POLICY_UPDATED</tspan>
+</text>
+<polyline class="line" points="770,610 1120,610 1120,417"/>
+<text class="label" x="910" y="594" text-anchor="middle">
+<tspan x="910" dy="0">9.1. Insert log</tspan>
+</text>
+<polyline class="reply" points="530,395 420,395"/>
+<text class="label" x="475" y="416" text-anchor="middle">
+<tspan x="475" dy="0">10. Nh&#7853;n k&#7871;t qu&#7843;</tspan>
+</text>
+<polyline class="reply" points="250,375 153,375"/>
+<text class="label" x="205" y="404" text-anchor="middle">
+<tspan x="205" dy="0">11. Xem policy m&#7899;i</tspan>
+</text>
+</svg>

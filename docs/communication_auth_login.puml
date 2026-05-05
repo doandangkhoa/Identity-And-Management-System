@@ -1,0 +1,36 @@
+@startuml communication_auth_login
+
+title 5.3.1. Sơ đồ giao tiếp - Đăng nhập
+
+left to right direction
+skinparam shadowing false
+skinparam linetype ortho
+skinparam nodesep 120
+skinparam ranksep 110
+skinparam rectangle {
+  BorderColor #333333
+  BackgroundColor #FFFFFF
+  FontName Arial
+  FontSize 12
+}
+
+frame "Interaction Login" {
+  rectangle "Người dùng" as user
+  rectangle ": Frontend" as fe
+  rectangle ": AuthService" as auth
+  rectangle ": MFAService" as mfa
+  rectangle ": SessionService" as session
+  database "Database" as db
+
+  user -right-> fe : 1. Nhập username/password
+  fe -right-> auth : 2. POST /auth/login
+  auth -right-> db : 3. Truy vấn user\n4. Kiểm tra password\n8. Ghi audit log
+  auth -down-> mfa : 5. Kiểm tra/xác thực MFA
+  mfa -right-> db : 5.1. Lấy MFA profile
+  auth -down-> session : 6. Tạo phiên
+  session -right-> db : 7. Lưu user_session
+  auth ..left..> fe : 9. Trả token
+  fe ..left..> user : 10. Hiển thị Dashboard
+}
+
+@enduml

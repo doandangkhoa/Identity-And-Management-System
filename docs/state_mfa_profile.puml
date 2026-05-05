@@ -1,0 +1,29 @@
+@startuml state_mfa_profile
+
+title 5.1.3. Máy trạng thái MFA Profile
+
+skinparam shadowing false
+skinparam state {
+  BorderColor #333333
+  BackgroundColor #FFFFFF
+  FontName Arial
+  FontSize 12
+}
+
+[*] --> Disabled : Chưa bật MFA
+
+Disabled --> SetupPending : Người dùng chọn bật MFA
+SetupPending --> SetupPending : Tạo Secret Key, QR và Recovery Codes
+SetupPending --> Enabled : Xác thực TOTP lần đầu thành công
+SetupPending --> Disabled : Hủy thiết lập hoặc OTP sai quá giới hạn
+
+Enabled --> Verifying : Đăng nhập yêu cầu MFA
+Verifying --> Enabled : TOTP hợp lệ
+Verifying --> RecoveryCodeUsed : Recovery Code hợp lệ
+RecoveryCodeUsed --> Enabled : Đánh dấu mã đã sử dụng
+Verifying --> Enabled : TOTP sai / yêu cầu nhập lại
+
+Enabled --> Disabled : Xác thực và tắt MFA
+Disabled --> [*] : Xóa cấu hình MFA
+
+@enduml

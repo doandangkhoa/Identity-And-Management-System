@@ -1,0 +1,58 @@
+@startuml UC_SYS_Admin_Unlock_Account
+
+title Admin unlock account
+
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+skinparam shadowing false
+skinparam sequence {
+  ArrowColor #2C3E50
+  ActorBorderColor #2C3E50
+  LifeLineBorderColor #2C3E50
+  ParticipantBorderColor #2C3E50
+  ParticipantBackgroundColor #ECF0F1
+  ActorBackgroundColor #ECF0F1
+}
+
+actor "Quản trị viên" as Admin
+participant "Admin UI" as UI
+participant "AuthService" as Auth
+participant "AdminService" as AdminSvc
+participant "UserService" as UserSvc
+participant "EmailAgent" as Email
+database "Database" as DB
+
+Admin -> UI : Chọn tài khoản và nhấn "Mở khóa"
+UI -> Auth : validateAdminToken(accessToken)
+Auth -> DB : Load admin role/permissions
+DB --> Auth : Admin permissions
+
+alt Không có quyền quản trị
+  Auth --> UI : 403 Forbidden
+  UI --> Admin : Thông báo không đủ quyền
+else Có quyền quản trị
+  Auth --> UI : OK
+  UI -> AdminSvc : unlockAccount(targetUserId, reason)
+  AdminSvc -> UserSvc : getUser(targetUserId)
+  UserSvc -> DB : SELECT user WHERE id = targetUserId
+  DB --> UserSvc : Target user
+
+  alt Tài khoản không tồn tại
+    UserSvc --> AdminSvc : null
+    AdminSvc --> UI : 404 Not Found
+    UI --> Admin : Thông báo không tìm thấy tài khoản
+  else Tài khoản tồn tại
+    AdminSvc -> UserSvc : updateStatus(targetUserId, ACTIVE)
+    UserSvc -> DB : UPDATE user SET status = ACTIVE,\nfailed_login_attempts = 0
+    DB --> UserSvc : OK
+
+    AdminSvc -> DB : INSERT audit_log (USER_UNLOCKED, reason)
+    AdminSvc -> Email : Gửi email thông báo mở khóa tài khoản
+    Email --> AdminSvc : Sent
+
+    AdminSvc --> UI : 200 OK
+    UI --> Admin : Hiển thị mở khóa tài khoản thành công
+  end
+end
+
+@enduml

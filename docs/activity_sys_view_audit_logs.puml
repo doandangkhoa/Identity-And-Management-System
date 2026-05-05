@@ -1,0 +1,53 @@
+@startuml activity_sys_05_view_audit_logs
+
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam activity {
+  BackgroundColor #F8FAFC
+  BorderColor #2C3E50
+  ArrowColor #2C3E50
+  DiamondBackgroundColor #FFFFFF
+  DiamondBorderColor #2C3E50
+}
+
+title UC-SYS-05: Truy xuất nhật ký kiểm soát
+
+|Quản trị viên|
+start
+:Nhập tham số lọc\n(thời gian, loại hành động,\nngười thực hiện, mức độ);
+
+|Hệ thống|
+:Truy vấn Audit Log Storage;
+
+if (Tìm thấy dữ liệu?) then (Không)
+  :Trả thông báo\nkhông tìm thấy dữ liệu;
+  |Quản trị viên|
+  :Xem thông báo\nkhông tìm thấy dữ liệu;
+  stop
+else (Có)
+endif
+
+|Hệ thống|
+:Trả về danh sách\nkết quả phù hợp;
+
+|Quản trị viên|
+:Xem danh sách log;
+
+if (Xuất báo cáo?) then (Không)
+  :Kết thúc tra cứu;
+  stop
+else (Có)
+endif
+
+|Quản trị viên|
+:Chọn "Xuất báo cáo";
+
+|Hệ thống|
+:Tạo file báo cáo\nPDF/Excel;
+
+|Quản trị viên|
+:Tải báo cáo;
+stop
+
+@enduml

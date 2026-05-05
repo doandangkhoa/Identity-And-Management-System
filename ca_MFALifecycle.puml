@@ -1,0 +1,50 @@
+@startuml
+left to right direction
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+
+rectangle "MFA Lifecycle" {
+
+  usecase "Enable MFA" as UC1
+  usecase "Disable MFA" as UC2
+
+  usecase "Generate QR & Secret\nKey" as UC3
+  usecase "Generate Recovery\nCodes" as UC4
+  usecase "Authenticate MFA" as UC5
+
+  usecase "Verify TOTP Code" as UC6
+  usecase "Verify Recovery Code" as UC7
+}
+
+actor "User" as User
+actor "Admin" as Admin
+
+' ===== Actor =====
+User -- UC1
+User -- UC2
+Admin --|> User
+
+' ===== Include =====
+UC1 ..> UC3 : <<include>>
+UC1 ..> UC4 : <<include>>
+UC2 ..> UC5 : <<include>>
+
+' ===== Generalization (đúng như hình) =====
+UC6 --|> UC5
+UC7 --|> UC5
+
+' ===== Layout ép giống hình =====
+UC1 -[hidden]down- UC2
+
+UC3 -[hidden]down- UC4
+UC4 -[hidden]down- UC5
+UC5 -[hidden]down- UC6
+UC6 -[hidden]right- UC7
+
+UC1 -[hidden]right- UC3
+UC2 -[hidden]right- UC5
+
+User -[hidden]down- Admin
+
+@enduml

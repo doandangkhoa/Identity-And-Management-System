@@ -1,0 +1,39 @@
+@startuml activity_sys_02_lock_unlock_account
+
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam activity {
+  BackgroundColor #F8FAFC
+  BorderColor #2C3E50
+  ArrowColor #2C3E50
+  DiamondBackgroundColor #FFFFFF
+  DiamondBorderColor #2C3E50
+}
+
+title UC-SYS-02: Khóa/Mở khóa tài khoản
+
+|Quản trị viên|
+start
+:Chọn tài khoản cần\nkhóa/mở khóa;
+:Nhập lý do thay đổi\ntrạng thái;
+
+|Hệ thống|
+:Kiểm tra trạng thái\nhiện tại của tài khoản;
+
+if (Trạng thái hiện tại?) then (Active)
+  :Chuyển trạng thái\nsang Locked;
+  :Thu hồi tất cả\nsession/token đang hoạt động;
+else (Locked)
+  :Chuyển trạng thái\nsang Active;
+endif
+
+:Cập nhật trạng thái\ntrong CSDL;
+:Ghi audit log\nUSER_LOCKED/USER_UNLOCKED;
+:Gửi email thông báo\ncho người dùng;
+
+|Quản trị viên|
+:Xem thông báo thay đổi\ntrạng thái thành công;
+stop
+
+@enduml

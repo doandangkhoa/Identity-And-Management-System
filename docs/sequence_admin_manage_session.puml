@@ -1,0 +1,67 @@
+@startuml UC_AUTH_Admin_Manage_Session
+
+title Admin manage Session
+
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+skinparam shadowing false
+skinparam sequence {
+  ArrowColor #2C3E50
+  ActorBorderColor #2C3E50
+  LifeLineBorderColor #2C3E50
+  ParticipantBorderColor #2C3E50
+  ParticipantBackgroundColor #ECF0F1
+  ActorBackgroundColor #ECF0F1
+}
+
+actor "Quản trị viên" as Admin
+participant "Admin UI" as UI
+participant "AuthService" as Auth
+participant "SessionService" as Session
+participant "AuditService" as Audit
+database "Database" as DB
+
+Admin -> UI : Mở màn hình quản lý phiên
+UI -> Auth : validateAdminToken(accessToken)
+Auth -> DB : Load admin role/permissions
+DB --> Auth : Admin permissions
+
+alt Không có quyền xem/thu hồi phiên
+  Auth --> UI : 403 Forbidden
+  UI --> Admin : Thông báo không đủ quyền
+else Có quyền quản lý phiên
+  Auth --> UI : OK
+  UI -> Session : getUserSessions(targetUserId)
+  Session -> DB : SELECT user_session\nWHERE user_id = targetUserId\nORDER BY last_active_at DESC
+  DB --> Session : Danh sách phiên
+  Session --> UI : Sessions + login history
+  UI --> Admin : Hiển thị device, IP,\nthời gian, vị trí
+
+  alt Admin chỉ xem danh sách
+    Admin -> UI : Đóng màn hình
+  else Admin thu hồi phiên
+    Admin -> UI : Chọn phiên cần thu hồi
+    UI -> Session : revokeSession(sessionId, adminId)
+    Session -> DB : SELECT user_session WHERE id = sessionId
+    DB --> Session : Session
+
+    alt Phiên không tồn tại hoặc đã bị thu hồi
+      Session --> UI : 404/409 Session unavailable
+      UI --> Admin : Hiển thị lỗi
+    else Phiên hợp lệ
+      Session -> DB : UPDATE user_session\nSET is_active = false,\nrevoked_by = adminId
+      DB --> Session : OK
+      Session -> Audit : record(SESSION_REVOKED)
+      Audit -> DB : INSERT audit_log
+      DB --> Audit : OK
+      Session --> UI : 200 OK
+      UI -> Session : getUserSessions(targetUserId)
+      Session -> DB : SELECT user_session updated
+      DB --> Session : Danh sách phiên mới
+      Session --> UI : Updated sessions
+      UI --> Admin : Hiển thị kết quả cập nhật
+    end
+  end
+end
+
+@enduml

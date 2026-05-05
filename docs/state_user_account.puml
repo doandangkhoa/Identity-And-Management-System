@@ -1,0 +1,31 @@
+@startuml state_user_account
+
+title 5.1.1. Máy trạng thái tài khoản người dùng
+
+skinparam shadowing false
+skinparam state {
+  BorderColor #333333
+  BackgroundColor #FFFFFF
+  FontName Arial
+  FontSize 12
+}
+
+[*] --> Created : Tạo tài khoản
+
+Created --> Active : Kích hoạt tài khoản
+Created --> Disabled : Hủy tài khoản chưa kích hoạt
+
+Active --> Locked : Đăng nhập sai quá số lần cho phép
+Locked --> Active : Mở khóa bởi quản trị viên
+Locked --> Active : Hết thời gian khóa tạm thời
+
+Active --> PasswordResetPending : Yêu cầu khôi phục mật khẩu
+PasswordResetPending --> Active : Đặt mật khẩu mới thành công
+PasswordResetPending --> Active : Token hết hạn hoặc hủy yêu cầu
+
+Active --> Disabled : Vô hiệu hóa tài khoản
+Disabled --> Active : Kích hoạt lại
+
+Disabled --> [*] : Xóa hoặc lưu trữ tài khoản
+
+@enduml

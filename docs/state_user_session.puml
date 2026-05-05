@@ -1,0 +1,28 @@
+@startuml state_user_session
+
+title 5.1.2. Máy trạng thái phiên làm việc
+
+skinparam shadowing false
+skinparam state {
+  BorderColor #333333
+  BackgroundColor #FFFFFF
+  FontName Arial
+  FontSize 12
+}
+
+[*] --> Created : Đăng nhập hợp lệ
+
+Created --> Active : Phát hành access token và refresh token
+
+Active --> Refreshed : Refresh token hợp lệ
+Refreshed --> Active : Phát hành access token mới
+
+Active --> Expired : Quá thời gian hiệu lực
+Active --> Revoked : Người dùng đăng xuất
+Active --> Revoked : Đổi mật khẩu / thu hồi phiên
+Active --> Revoked : Quản trị viên khóa tài khoản
+
+Expired --> Revoked : Dọn dẹp phiên hết hạn
+Revoked --> [*]
+
+@enduml

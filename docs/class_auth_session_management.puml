@@ -1,0 +1,107 @@
+@startuml class_auth_session_management
+
+title Authentication & Session Management - Class Diagram (Rút gọn)
+
+top to bottom direction
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam nodesep 55
+skinparam ranksep 60
+hide circle
+
+package "Authentication & Session Management" {
+  class User {
+    - id: String
+    - username: String
+    - email: String
+    - passwordHash: String
+    - failedLoginAttempts: Integer
+    - status: UserStatus
+    --
+    + verifyPassword(password): Boolean
+    + lockAccount(): void
+  }
+
+  class UserSession {
+    - id: String
+    - accessToken: String
+    - refreshToken: String
+    - deviceInfo: String
+    - status: SessionStatus
+    - expiresAt: DateTime
+    --
+    + isValid(): Boolean
+    + revoke(): void
+  }
+
+  class PasswordResetToken {
+    - id: String
+    - tokenHash: String
+    - expiresAt: DateTime
+    - usedAt: DateTime
+    --
+    + isValid(): Boolean
+    + markUsed(): void
+  }
+
+  class SecurityPolicy {
+    - maxLoginAttempts: Integer
+    - passwordMinLength: Integer
+    - sessionTimeoutMinutes: Integer
+    --
+    + validatePassword(password): Boolean
+    + shouldLock(failedAttempts): Boolean
+  }
+
+  class AuthService {
+    + login(username, password): AuthResult
+    + logout(sessionId): void
+    + validateToken(token): Boolean
+  }
+
+  class SessionService {
+    + createSession(user): UserSession
+    + getActiveSessions(userId): List<UserSession>
+    + revokeSession(sessionId): void
+  }
+
+  class PasswordService {
+    + requestRecovery(email): void
+    + resetPassword(token, newPassword): void
+    + changePassword(userId, oldPassword, newPassword): void
+  }
+
+  class AuditLog {
+    - id: String
+    - action: AuditAction
+    - detail: String
+    - createdAt: DateTime
+    --
+    + record(): void
+  }
+
+  interface EmailAgent {
+    + sendRecoveryLink(email, link): void
+  }
+}
+
+User "1" *-- "0..*" UserSession
+User "1" *-- "0..*" PasswordResetToken
+User "1" -- "0..*" AuditLog
+
+AuthService ..> User
+AuthService ..> SessionService
+AuthService ..> SecurityPolicy
+AuthService ..> AuditLog
+
+SessionService ..> UserSession
+SessionService ..> AuditLog
+
+PasswordService ..> User
+PasswordService ..> PasswordResetToken
+PasswordService ..> SecurityPolicy
+PasswordService ..> EmailAgent
+PasswordService ..> AuditLog
+
+@enduml

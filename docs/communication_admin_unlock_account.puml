@@ -1,0 +1,36 @@
+@startuml communication_admin_unlock_account
+
+title 5.3.4. Sơ đồ giao tiếp - Admin unlock account
+
+left to right direction
+skinparam shadowing false
+skinparam linetype ortho
+skinparam nodesep 90
+skinparam ranksep 90
+skinparam rectangle {
+  BorderColor #333333
+  BackgroundColor #FFFFFF
+  FontName Arial
+  FontSize 12
+}
+
+frame "Interaction Admin unlock account" {
+  actor "System Admin" as admin
+  rectangle ": UserService" as userSvc
+  rectangle ": AuditLogService" as audit
+  rectangle ": EmailAgent" as email
+  database "Database" as db
+
+  admin -right-> userSvc : 1. POST /admin/users/{id}/unlock
+  userSvc -right-> db : 2. Truy vấn tài khoản theo ID
+  db ..left..> userSvc : 3. Thông tin User đang khóa
+  userSvc -right-> db : 4. status = ACTIVE,\nfailedLoginAttempts = 0
+  db ..left..> userSvc : 5. Cập nhật thành công
+  userSvc -up-> audit : 6. Ghi log USER_UNLOCKED
+  audit ..down..> userSvc : 7. Lưu log thành công
+  userSvc -down-> email : 8. Yêu cầu gửi email
+  email ..up..> userSvc : 9. Email đã gửi
+  userSvc ..left..> admin : 10. HTTP 200 OK
+}
+
+@enduml

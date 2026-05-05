@@ -1,0 +1,41 @@
+@startuml communication_client_app_call_api
+
+title 5.3.10. Sơ đồ giao tiếp - ClientApp gọi API
+
+left to right direction
+skinparam shadowing false
+skinparam linetype ortho
+skinparam nodesep 90
+skinparam ranksep 90
+skinparam rectangle {
+  BorderColor #333333
+  BackgroundColor #FFFFFF
+  FontName Arial
+  FontSize 12
+}
+
+frame "Interaction ClientApp gọi API" {
+  rectangle ": ClientApplication" as client
+  rectangle ": API Gateway" as gateway
+  rectangle ": AuthService" as auth
+  rectangle ": MFAService" as mfa
+  rectangle ": ResourceService" as resource
+  database "Database" as db
+
+  client -[hidden]right- gateway
+  gateway -[hidden]right- db
+  auth -[hidden]down- gateway
+  gateway -[hidden]down- mfa
+  mfa -[hidden]right- resource
+
+  client -right-> gateway : 1. API request + Bearer token
+  gateway -right-> auth : 2. validateToken()
+  auth -right-> db : 3. Load session + user profile
+  gateway -down-> mfa : 4. Check MFA requirement
+  mfa -right-> db : 5. Load policy/MFA profile
+  gateway -down-> resource : 6. Forward request + userContext
+  resource -right-> db : 7. Query data
+  resource -right-> db : 8. Insert audit log
+}
+
+@enduml

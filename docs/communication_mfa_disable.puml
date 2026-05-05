@@ -1,0 +1,38 @@
+@startuml communication_mfa_disable
+
+title 5.3.8. Sơ đồ giao tiếp - Disable MFA
+
+left to right direction
+skinparam shadowing false
+skinparam linetype ortho
+skinparam nodesep 90
+skinparam ranksep 90
+skinparam rectangle {
+  BorderColor #333333
+  BackgroundColor #FFFFFF
+  FontName Arial
+  FontSize 12
+}
+
+frame "Interaction Disable MFA" {
+  actor "Người dùng" as user
+  rectangle ": Frontend" as fe
+  rectangle ": AuthService" as auth
+  rectangle ": MFAService" as mfa
+  rectangle ": RecoveryCodeService" as recovery
+  database "Database" as db
+
+  user -right-> fe : 1. Chọn Tắt MFA
+  fe -right-> auth : 2. Re-authenticate
+  auth -right-> db : 3. Load passwordHash
+  auth ..left..> fe : 4. Yêu cầu mã MFA
+  user -right-> fe : 5. Nhập TOTP/recovery code
+  fe -down-> mfa : 6. verifyMfaCode()
+  mfa -right-> db : 7. Load MFA profile
+  mfa -down-> recovery : 8. Check recovery code
+  recovery -right-> db : 9. Load code hash
+  mfa -right-> db : 10. Disable MFA + audit log
+  mfa ..up..> fe : 11. HTTP 200 OK
+}
+
+@enduml

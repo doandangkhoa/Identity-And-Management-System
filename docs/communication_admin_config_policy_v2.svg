@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="640" viewBox="0 0 1180 640">
+<defs>
+  <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#111" /></marker>
+</defs>
+<style>
+  .frame,.object,.db{fill:#fff;stroke:#111;stroke-width:1.2}.line{stroke:#111;stroke-width:1.2;fill:none;marker-end:url(#arrow)}.reply{stroke:#111;stroke-width:1.2;fill:none;stroke-dasharray:6 5;marker-end:url(#arrow)}
+  text{font-family:Arial,Helvetica,sans-serif;font-size:14px;fill:#111}.title{font-size:18px;font-weight:700}.frame-title,.obj-title{font-size:14px;font-weight:700}.label{font-size:13px}
+</style>
+<text class="title" x="590.0" y="28" text-anchor="middle">
+<tspan x="590.0" dy="0">5.3.6. S&#x1A1; &#x111;&#x1ED3; giao ti&#x1EBF;p - Admin config policy</tspan>
+</text>
+<rect class="frame" x="25" y="50" width="1130" height="565"/>
+<path class="frame" d="M25,50 H308 L292,76 H25 Z"/>
+<text class="frame-title" x="35" y="68" text-anchor="start">
+<tspan x="35" dy="0">Interaction Admin config policy</tspan>
+</text>
+<g id="admin"><circle class="object" cx="85" cy="295" r="11"/><line class="object" x1="85" y1="306" x2="85" y2="343"/><line class="object" x1="60" y1="320" x2="110" y2="320"/><line class="object" x1="85" y1="343" x2="63" y2="373"/><line class="object" x1="85" y1="343" x2="107" y2="373"/><text class="obj-title" x="85" y="397" text-anchor="middle">
+<tspan x="85" dy="0">System Admin</tspan>
+</text></g>
+<rect class="object" id="ui" x="230" y="285" width="135" height="60"/>
+<text class="obj-title" x="297.5" y="320.0" text-anchor="middle">
+<tspan x="297.5" dy="0">: Admin UI</tspan>
+</text>
+<rect class="object" id="auth" x="455" y="120" width="150" height="60"/>
+<text class="obj-title" x="530.0" y="155.0" text-anchor="middle">
+<tspan x="530.0" dy="0">: AuthService</tspan>
+</text>
+<rect class="object" id="policy" x="455" y="390" width="170" height="70"/>
+<text class="obj-title" x="540.0" y="430.0" text-anchor="middle">
+<tspan x="540.0" dy="0">: PolicyService</tspan>
+</text>
+<rect class="object" id="audit" x="745" y="390" width="180" height="65"/>
+<text class="obj-title" x="835.0" y="427.5" text-anchor="middle">
+<tspan x="835.0" dy="0">: AuditLogService</tspan>
+</text>
+<path class="db" id="db" d="M905,253 C905,229 1035,229 1035,253 L1035,302 C1035,326 905,326 905,302 Z"/>
+<ellipse class="db" cx="970.0" cy="253" rx="65.0" ry="18"/>
+<text class="obj-title" x="970.0" y="292.5" text-anchor="middle">
+<tspan x="970.0" dy="0">Database</tspan>
+</text>
+<line class="line" x1="115" y1="332" x2="230" y2="315"/>
+<text class="label" x="170" y="300" text-anchor="middle">
+<tspan x="170" dy="0">1. M&#x1EDF; c&#x1EA5;u h&#xEC;nh policy</tspan>
+</text>
+<line class="line" x1="365" y1="295" x2="455" y2="150"/>
+<text class="label" x="405" y="220" text-anchor="middle">
+<tspan x="405" dy="0">2. Validate admin token</tspan>
+</text>
+<line class="line" x1="605" y1="150" x2="930" y2="250"/>
+<text class="label" x="760" y="180" text-anchor="middle">
+<tspan x="760" dy="0">3. Load quy&#x1EC1;n admin</tspan>
+</text>
+<line class="line" x1="365" y1="330" x2="455" y2="410"/>
+<text class="label" x="405" y="380" text-anchor="middle">
+<tspan x="405" dy="0">4. getCurrentPolicy()</tspan>
+</text>
+<line class="line" x1="625" y1="410" x2="930" y2="280"/>
+<text class="label" x="770" y="390" text-anchor="middle">
+<tspan x="770" dy="0">5. SELECT security_policy</tspan>
+</text>
+<line class="reply" x1="930" y1="310" x2="625" y2="440"/>
+<text class="label" x="770" y="485" text-anchor="middle">
+<tspan x="770" dy="0">6. Policy hi&#x1EC7;n t&#x1EA1;i</tspan>
+</text>
+<line class="line" x1="115" y1="360" x2="230" y2="340"/>
+<text class="label" x="170" y="385" text-anchor="middle">
+<tspan x="170" dy="0">7. C&#x1EAD;p nh&#x1EAD;t tham s&#x1ED1;</tspan>
+</text>
+<line class="line" x1="365" y1="345" x2="455" y2="440"/>
+<text class="label" x="415" y="500" text-anchor="middle">
+<tspan x="415" dy="0">8. updatePolicy(payload)</tspan>
+</text>
+<line class="line" x1="625" y1="435" x2="930" y2="305"/>
+<text class="label" x="770" y="430" text-anchor="middle">
+<tspan x="770" dy="0">9. UPDATE security_policy</tspan>
+</text>
+<line class="line" x1="625" y1="425" x2="745" y2="420"/>
+<text class="label" x="690" y="400" text-anchor="middle">
+<tspan x="690" dy="0">10. Ghi log POLICY_UPDATED</tspan>
+</text>
+<line class="line" x1="925" y1="420" x2="955" y2="330"/>
+<text class="label" x="940" y="375" text-anchor="middle">
+<tspan x="940" dy="0">11. L&#x1B0;u audit log</tspan>
+</text>
+<line class="reply" x1="455" y1="460" x2="365" y2="360"/>
+<text class="label" x="410" y="520" text-anchor="middle">
+<tspan x="410" dy="0">12. HTTP 200 OK</tspan>
+</text>
+</svg>

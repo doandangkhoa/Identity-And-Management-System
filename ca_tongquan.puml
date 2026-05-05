@@ -1,0 +1,55 @@
+@startuml
+left to right direction
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+
+rectangle "IAM System" {
+
+  usecase "Monitor System" as UC1
+  usecase "Manage Account" as UC2
+  usecase "Configure Security\nPolicies" as UC3
+  usecase "Authenticate via API" as UC4
+  usecase "Login" as UC5
+  usecase "Verify Identity" as UC6
+  usecase "Send OTP/Recovery\nLink" as UC7
+  usecase "Configure MFA" as UC8
+}
+
+actor "System Admin" as Admin
+actor "End User" as User
+actor "Client Application" as Client
+actor "Email/SMS Agents" as Agent
+
+' ===== Actor relationships =====
+Admin -- UC1
+Admin -- UC2
+Admin -- UC3
+
+User -- UC5
+User -- UC8
+
+UC4 -- Client
+UC7 -- Agent
+
+' ===== Generalization (quan trọng) =====
+Admin --|> User
+
+' ===== Include / Extend =====
+UC5 ..> UC6 : <<include>>
+UC7 ..> UC5 : <<extend>>
+
+' ===== Layout ép giống hình =====
+UC1 -[hidden]down- UC2
+UC2 -[hidden]down- UC3
+UC3 -[hidden]down- UC4
+UC4 -[hidden]down- UC5
+UC5 -[hidden]down- UC8
+
+UC4 -[hidden]right- UC6
+UC5 -[hidden]right- UC7
+
+Admin -[hidden]down- User
+Client -[hidden]down- Agent
+
+@enduml

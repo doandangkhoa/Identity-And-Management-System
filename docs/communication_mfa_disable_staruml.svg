@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1320" height="760" viewBox="0 0 1320 760">
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#111" /></marker></defs>
+<style>
+.frame,.object,.db,.actor-line{fill:#fff;stroke:#111;stroke-width:1.35}.line{stroke:#111;stroke-width:1.35;fill:none;marker-end:url(#arrow)}.reply{stroke:#111;stroke-width:1.35;fill:none;stroke-dasharray:7 5;marker-end:url(#arrow)}
+text{font-family:Arial,Helvetica,sans-serif;font-size:14px;fill:#111}.title{font-size:17px;font-weight:700;paint-order:stroke;stroke:#fff;stroke-width:4px;stroke-linejoin:round}.frame-title{font-size:14px}.keyword{font-weight:700}.obj-title{font-size:15px;font-weight:700}.label{font-size:13px;paint-order:stroke;stroke:#fff;stroke-width:5px;stroke-linejoin:round}
+</style>
+<text class="title" x="660.0" y="30" text-anchor="middle">
+<tspan x="660.0" dy="0">5.3.8. S&#417; &#273;&#7891; giao ti&#7871;p - Disable MFA</tspan>
+</text>
+<rect class="frame" x="50" y="55" width="1220" height="655"/>
+<path class="frame" d="M50,55 H320 L300,84 H50 Z"/>
+<text class="frame-title" x="62" y="76"><tspan class="keyword">interaction</tspan> Disable MFA</text>
+<circle class="actor-line" cx="125" cy="335" r="12"/>
+<line class="actor-line" x1="125" y1="347" x2="125" y2="390"/>
+<line class="actor-line" x1="97" y1="365" x2="153" y2="365"/>
+<line class="actor-line" x1="125" y1="390" x2="101" y2="423"/>
+<line class="actor-line" x1="125" y1="390" x2="149" y2="423"/>
+<text class="obj-title" x="125" y="450" text-anchor="middle">
+<tspan x="125" dy="0">: Ng&#432;&#7901;i d&#249;ng</tspan>
+</text>
+<rect class="object" x="250" y="320" width="170" height="70"/>
+<text class="obj-title" x="335.0" y="360.0" text-anchor="middle">
+<tspan x="335.0" dy="0">: Frontend</tspan>
+</text>
+<rect class="object" x="590" y="290" width="240" height="110"/>
+<text class="obj-title" x="710.0" y="350.0" text-anchor="middle">
+<tspan x="710.0" dy="0">: MFAService</tspan>
+</text>
+<path class="db" d="M1070,314 C1070,290 1240,290 1240,314 L1240,395 C1240,419 1070,419 1070,395 Z"/>
+<ellipse class="db" cx="1155.0" cy="314" rx="85.0" ry="22"/>
+<text class="obj-title" x="1155.0" y="368.5" text-anchor="middle">
+<tspan x="1155.0" dy="0">Database</tspan>
+</text>
+<rect class="object" x="600" y="105" width="220" height="80"/>
+<text class="obj-title" x="710.0" y="150.0" text-anchor="middle">
+<tspan x="710.0" dy="0">: AuthService</tspan>
+</text>
+<rect class="object" x="600" y="570" width="220" height="80"/>
+<text class="obj-title" x="710.0" y="615.0" text-anchor="middle">
+<tspan x="710.0" dy="0">: RecoveryCodeService</tspan>
+</text>
+<polyline class="line" points="153,345 250,345"/>
+<text class="label" x="205" y="326" text-anchor="middle">
+<tspan x="205" dy="0">1. Ch&#7885;n T&#7855;t MFA</tspan>
+</text>
+<polyline class="line" points="330,320 330,235 600,235 600,150"/>
+<text class="label" x="405" y="225" text-anchor="middle">
+<tspan x="405" dy="0">2.</tspan>
+<tspan x="405" dy="17">reauthenticate(password)</tspan>
+</text>
+<polyline class="line" points="820,150 960,150 960,292 1070,292"/>
+<text class="label" x="978" y="218" text-anchor="start">
+<tspan x="978" dy="0">2.1. Load password hash</tspan>
+</text>
+<polyline class="line" points="420,342 590,342"/>
+<text class="label" x="505" y="322" text-anchor="middle">
+<tspan x="505" dy="0">3. Y&#234;u c&#7847;u m&#227; MFA</tspan>
+</text>
+<polyline class="line" points="153,385 210,385 210,365 250,365"/>
+<text class="label" x="205" y="415" text-anchor="middle">
+<tspan x="205" dy="0">4. Nh&#7853;p TOTP ho&#7863;c m&#227; kh&#244;i</tspan>
+<tspan x="205" dy="17">ph&#7909;c</tspan>
+</text>
+<polyline class="line" points="420,380 590,380"/>
+<text class="label" x="505" y="412" text-anchor="middle">
+<tspan x="505" dy="0">5. verifyMfaCode()</tspan>
+</text>
+<polyline class="line" points="680,405 680,570"/>
+<text class="label" x="580" y="500" text-anchor="middle">
+<tspan x="580" dy="0">6.</tspan>
+<tspan x="580" dy="17">validateRecoveryCodeIfNeeded()</tspan>
+</text>
+<polyline class="line" points="820,610 1120,610 1120,417"/>
+<text class="label" x="970" y="592" text-anchor="middle">
+<tspan x="970" dy="0">6.1. Load recovery hash</tspan>
+</text>
+<polyline class="line" points="830,348 1070,348"/>
+<text class="label" x="950" y="366" text-anchor="middle">
+<tspan x="950" dy="0">7. deleteSecretKeyAndDisableMfa()</tspan>
+</text>
+<polyline class="line" points="830,394 1070,394"/>
+<text class="label" x="950" y="424" text-anchor="middle">
+<tspan x="950" dy="0">8. deleteRecoveryCodes + audit log</tspan>
+</text>
+<polyline class="reply" points="590,400 420,400"/>
+<text class="label" x="505" y="430" text-anchor="middle">
+<tspan x="505" dy="0">10. Tr&#7843; k&#7871;t qu&#7843; t&#7855;t MFA</tspan>
+</text>
+<polyline class="reply" points="250,390 153,390"/>
+<text class="label" x="205" y="425" text-anchor="middle">
+<tspan x="205" dy="0">11. Hi&#7875;n th&#7883; th&#244;ng b&#225;o</tspan>
+<tspan x="205" dy="17">th&#224;nh c&#244;ng</tspan>
+</text>
+</svg>

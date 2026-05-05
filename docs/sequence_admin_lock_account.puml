@@ -1,0 +1,70 @@
+@startuml UC_SYS_Admin_Lock_Account
+
+title Admin lock account
+
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+skinparam shadowing false
+skinparam sequence {
+  ArrowColor #2C3E50
+  ActorBorderColor #2C3E50
+  LifeLineBorderColor #2C3E50
+  ParticipantBorderColor #2C3E50
+  ParticipantBackgroundColor #ECF0F1
+  ActorBackgroundColor #ECF0F1
+}
+
+actor "Quản trị viên" as Admin
+participant "Admin UI" as UI
+participant "AuthService" as Auth
+participant "AdminService" as AdminSvc
+participant "UserService" as UserSvc
+participant "SessionService" as Session
+participant "EmailAgent" as Email
+database "Database" as DB
+
+Admin -> UI : Chọn tài khoản và nhấn "Khóa"
+UI -> Auth : validateAdminToken(accessToken)
+Auth -> DB : Load admin role/permissions
+DB --> Auth : Admin permissions
+
+alt Không có quyền quản trị
+  Auth --> UI : 403 Forbidden
+  UI --> Admin : Thông báo không đủ quyền
+else Có quyền quản trị
+  Auth --> UI : OK
+  UI -> AdminSvc : lockAccount(targetUserId, reason)
+  AdminSvc -> UserSvc : getUser(targetUserId)
+  UserSvc -> DB : SELECT user WHERE id = targetUserId
+  DB --> UserSvc : Target user
+
+  alt Tài khoản không tồn tại
+    UserSvc --> AdminSvc : null
+    AdminSvc --> UI : 404 Not Found
+    UI --> Admin : Thông báo không tìm thấy tài khoản
+  else Tài khoản tồn tại
+    AdminSvc -> AdminSvc : Kiểm tra không khóa Super Admin duy nhất
+
+    alt Không được phép khóa
+      AdminSvc --> UI : 409 Cannot lock last Super Admin
+      UI --> Admin : Thông báo lỗi nghiệp vụ
+    else Được phép khóa
+      AdminSvc -> UserSvc : updateStatus(targetUserId, LOCKED)
+      UserSvc -> DB : UPDATE user SET status = LOCKED
+      DB --> UserSvc : OK
+
+      AdminSvc -> Session : revokeAllSessions(targetUserId)
+      Session -> DB : UPDATE user_session\nSET is_active = false\nWHERE user_id = targetUserId
+      DB --> Session : OK
+
+      AdminSvc -> DB : INSERT audit_log (USER_LOCKED, reason)
+      AdminSvc -> Email : Gửi email thông báo khóa tài khoản
+      Email --> AdminSvc : Sent
+
+      AdminSvc --> UI : 200 OK
+      UI --> Admin : Hiển thị khóa tài khoản thành công
+    end
+  end
+end
+
+@enduml
