@@ -27,6 +27,8 @@ docs/
 
 - Sơ đồ lớp chi tiết: `diagrams/class/class_diagram.puml`
 - Ảnh render sơ đồ lớp: `diagrams/class/IAM_MFA_Class_Diagram.png`
+- Sơ đồ lớp domain/service/event: `diagrams/class/class_domain_diagram.puml`
+- Sơ đồ lớp DAM/DAO repository: `diagrams/class/class_dam_dao_diagram.puml`
 - Báo cáo chính: `reports/bao_cao_phan_tich_thiet_ke_he_thong_iam_mfa.md`
 - Phân công nhiệm vụ: `planning/work_allocation.md`
 
