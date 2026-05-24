@@ -128,10 +128,10 @@ B. Nhóm Tác nhân Hệ thống:
 
 Biểu đồ ca sử dụng tổng quan thể hiện các nhóm chức năng chính và mối quan hệ giữa tác nhân với hệ thống IAM:
 
-Nguồn PlantUML: [ca_tongquan.puml](../ca_tongquan.puml)
+Nguồn PlantUML: [ca_tongquan.puml](../diagrams/use-case/ca_tongquan.puml)
 
 ```plantuml
-!include ../ca_tongquan.puml
+!include ../diagrams/use-case/ca_tongquan.puml
 ```
 
 ### 3.3 Biểu đồ ca sử dụng phân rã
@@ -140,40 +140,40 @@ Nguồn PlantUML: [ca_tongquan.puml](../ca_tongquan.puml)
 
 Nhóm ca sử dụng này bao gồm các chức năng đăng nhập, đăng xuất, đổi/khôi phục mật khẩu và quản lý phiên làm việc. Ca sử dụng `Đăng nhập` bao gồm kiểm tra tài khoản, kiểm tra trạng thái khóa, xác định trạng thái MFA và chỉ cấp phiên chính thức sau khi toàn bộ bước xác thực bắt buộc hoàn tất.
 
-Nguồn PlantUML: [ca_Authentication_Session_Management.puml](../ca_Authentication_Session_Management.puml)
+Nguồn PlantUML: [ca_Authentication_Session_Management.puml](../diagrams/use-case/ca_Authentication_Session_Management.puml)
 
 ```plantuml
-!include ../ca_Authentication_Session_Management.puml
+!include ../diagrams/use-case/ca_Authentication_Session_Management.puml
 ```
 
 #### 3.3.2 Phân rã ca sử dụng MFA Lifecycle 
 
 Nhóm MFA Lifecycle bao gồm quy trình bật/tắt MFA, sinh QR và Secret Key, sinh mã khôi phục, xác thực TOTP và xác thực bằng mã khôi phục. Các use case kỹ thuật như tạo QR, tạo recovery code và xác thực TOTP được gọi bởi các use case nghiệp vụ lớn hơn.
 
-Nguồn PlantUML: [ca_MFALifecycle.puml](../ca_MFALifecycle.puml)
+Nguồn PlantUML: [ca_MFALifecycle.puml](../diagrams/use-case/ca_MFALifecycle.puml)
 
 ```plantuml
-!include ../ca_MFALifecycle.puml
+!include ../diagrams/use-case/ca_MFALifecycle.puml
 ```
 
 #### 3.3.3. Phân rã ca sử dụng System Administration 
 
 Nhóm System Administration bao gồm quản lý người dùng, khóa/mở khóa tài khoản, phân quyền, giám sát hệ thống và truy xuất nhật ký kiểm soát. Các thao tác quản trị nhạy cảm đều phải ghi audit log.
 
-Nguồn PlantUML: [ca_SystemAdministration.puml](../ca_SystemAdministration.puml)
+Nguồn PlantUML: [ca_SystemAdministration.puml](../diagrams/use-case/ca_SystemAdministration.puml)
 
 ```plantuml
-!include ../ca_SystemAdministration.puml
+!include ../diagrams/use-case/ca_SystemAdministration.puml
 ```
 
 #### 3.3.4 Phân rã ca sử dụng API Communication 
 
 Nhóm API Communication mô tả cách ứng dụng khách tích hợp với IAM. Ứng dụng khách gửi token đến API Gateway; Gateway xác thực chữ ký, hạn dùng và trạng thái MFA trước khi trả dữ liệu người dùng hoặc từ chối truy cập.
 
-Nguồn PlantUML: [ca_APICommunication.puml](../ca_APICommunication.puml)
+Nguồn PlantUML: [ca_APICommunication.puml](../diagrams/use-case/ca_APICommunication.puml)
 
 ```plantuml
-!include ../ca_APICommunication.puml
+!include ../diagrams/use-case/ca_APICommunication.puml
 ```
 
 ### 3.4 Đặc tả các ca sử dụng
@@ -443,19 +443,19 @@ Nguồn PlantUML: [ca_APICommunication.puml](../ca_APICommunication.puml)
 3.5.1 **Authentication & Session Management (uml)**  
 Activity Diagram — Đăng nhập
 
-Nguồn PlantUML: [activity_auth_login.puml](activity_auth_login.puml)
+Nguồn PlantUML: [activity_auth_login.puml](../diagrams/activity/activity_auth_login.puml)
 
 ```plantuml
-!include activity_auth_login.puml
+!include ../diagrams/activity/activity_auth_login.puml
 ```
 
 
 Activity Diagram — Khôi phục mật khẩu  
 
-Nguồn PlantUML: [activity_auth_recovery_password.puml](activity_auth_recovery_password.puml)
+Nguồn PlantUML: [activity_auth_recovery_password.puml](../diagrams/activity/activity_auth_recovery_password.puml)
 
 ```plantuml
-!include activity_auth_recovery_password.puml
+!include ../diagrams/activity/activity_auth_recovery_password.puml
 ```
 
 Activity Diagram — Đổi mật khẩu
@@ -540,102 +540,102 @@ stop
 
 Activity Diagram — Quản lý phiên làm việc   
 
-Nguồn PlantUML: [activity_auth_manage_session.puml](activity_auth_manage_session.puml)
+Nguồn PlantUML: [activity_auth_manage_session.puml](../diagrams/activity/activity_auth_manage_session.puml)
 
 ```plantuml
-!include activity_auth_manage_session.puml
+!include ../diagrams/activity/activity_auth_manage_session.puml
 ```
 
 Activity Diagram — Đăng xuất
 
-Nguồn PlantUML: [activity_auth_logout.puml](activity_auth_logout.puml)
+Nguồn PlantUML: [activity_auth_logout.puml](../diagrams/activity/activity_auth_logout.puml)
 
 ```plantuml
-!include activity_auth_logout.puml
+!include ../diagrams/activity/activity_auth_logout.puml
 ```
 
 ##### 3.5.2 MFA Lifecycle
 
 Bật chức năng MFA
 
-Nguồn PlantUML: [activity_mfa_enable.puml](activity_mfa_enable.puml)
+Nguồn PlantUML: [activity_mfa_enable.puml](../diagrams/activity/activity_mfa_enable.puml)
 
 ```plantuml
-!include activity_mfa_enable.puml
+!include ../diagrams/activity/activity_mfa_enable.puml
 ```
 
 Tắt chức năng MFA  
 
-Nguồn PlantUML: [activity_mfa_disable.puml](activity_mfa_disable.puml)
+Nguồn PlantUML: [activity_mfa_disable.puml](../diagrams/activity/activity_mfa_disable.puml)
 
 ```plantuml
-!include activity_mfa_disable.puml
+!include ../diagrams/activity/activity_mfa_disable.puml
 ```
 
 Tạo QR, Secret Key, Recovery Codes  
 
-Nguồn PlantUML: [activity_mfa_generate_qr_recovery_codes.puml](activity_mfa_generate_qr_recovery_codes.puml)
+Nguồn PlantUML: [activity_mfa_generate_qr_recovery_codes.puml](../diagrams/activity/activity_mfa_generate_qr_recovery_codes.puml)
 
 ```plantuml
-!include activity_mfa_generate_qr_recovery_codes.puml
+!include ../diagrams/activity/activity_mfa_generate_qr_recovery_codes.puml
 ```
 
 Xác thực TOTP, Recovery Code
 
-Nguồn PlantUML: [activity_mfa_verify_totp_recovery_code.puml](activity_mfa_verify_totp_recovery_code.puml)
+Nguồn PlantUML: [activity_mfa_verify_totp_recovery_code.puml](../diagrams/activity/activity_mfa_verify_totp_recovery_code.puml)
 
 ```plantuml
-!include activity_mfa_verify_totp_recovery_code.puml
+!include ../diagrams/activity/activity_mfa_verify_totp_recovery_code.puml
 ```
 
 ##### 3.5.3 System Administration
 
 Luồng nghiệp vụ Truy xuất nhật ký kiểm soát
 
-Nguồn PlantUML: [activity_sys_view_audit_logs.puml](activity_sys_view_audit_logs.puml)
+Nguồn PlantUML: [activity_sys_view_audit_logs.puml](../diagrams/activity/activity_sys_view_audit_logs.puml)
 
 ```plantuml
-!include activity_sys_view_audit_logs.puml
+!include ../diagrams/activity/activity_sys_view_audit_logs.puml
 ```
 
 Luồng nghiệp vụ Giám sát hệ thống
 
-Nguồn PlantUML: [activity_sys_monitor_system.puml](activity_sys_monitor_system.puml)
+Nguồn PlantUML: [activity_sys_monitor_system.puml](../diagrams/activity/activity_sys_monitor_system.puml)
 
 ```plantuml
-!include activity_sys_monitor_system.puml
+!include ../diagrams/activity/activity_sys_monitor_system.puml
 ```
 
 Luồng nghiệp vụ Phân quyền người dùng
 
-Nguồn PlantUML: [activity_sys_assign_role.puml](activity_sys_assign_role.puml)
+Nguồn PlantUML: [activity_sys_assign_role.puml](../diagrams/activity/activity_sys_assign_role.puml)
 
 ```plantuml
-!include activity_sys_assign_role.puml
+!include ../diagrams/activity/activity_sys_assign_role.puml
 ```
 
 Luồng nghiệp vụ Khóa/Mở khóa tài khoản
 
-Nguồn PlantUML: [activity_sys_lock_unlock_account.puml](activity_sys_lock_unlock_account.puml)
+Nguồn PlantUML: [activity_sys_lock_unlock_account.puml](../diagrams/activity/activity_sys_lock_unlock_account.puml)
 
 ```plantuml
-!include activity_sys_lock_unlock_account.puml
+!include ../diagrams/activity/activity_sys_lock_unlock_account.puml
 ```
 
 Luồng nghiệp vụ Quản lý người dùng (Thêm tài khoản)
 
-Nguồn PlantUML: [activity_sys_create_user.puml](activity_sys_create_user.puml)
+Nguồn PlantUML: [activity_sys_create_user.puml](../diagrams/activity/activity_sys_create_user.puml)
 
 ```plantuml
-!include activity_sys_create_user.puml
+!include ../diagrams/activity/activity_sys_create_user.puml
 ```
 
 ##### 3.5.4. API Communication
 
-Nguồn PlantUML: [activity_api_communication.puml](activity_api_communication.puml)
+Nguồn PlantUML: [activity_api_communication.puml](../diagrams/activity/activity_api_communication.puml)
 
 ```plantuml
-!include activity_api_communication.puml
+!include ../diagrams/activity/activity_api_communication.puml
 ```
 
 ## IV. Mô hình hướng cấu trúc
@@ -792,18 +792,18 @@ Sơ đồ lớp mô tả cấu trúc tĩnh của hệ thống, gồm các lớp 
 
 #### 4.2.1 Sơ đồ lớp tổng quan hệ thống IAM/MFA
 
-Nguồn PlantUML: [class_diagram.puml](class_diagram.puml)
+Nguồn PlantUML: [class_diagram.puml](../diagrams/class/class_diagram.puml)
 
 ```plantuml
-!include class_diagram.puml
+!include ../diagrams/class/class_diagram.puml
 ```
 
 #### 4.2.2 Sơ đồ lớp phân hệ Authentication & Session Management
 
-Nguồn PlantUML: [class_auth_session_management.puml](class_auth_session_management.puml)
+Nguồn PlantUML: [class_auth_session_management.puml](../diagrams/class/class_auth_session_management.puml)
 
 ```plantuml
-!include class_auth_session_management.puml
+!include ../diagrams/class/class_auth_session_management.puml
 ```
 
 ### 4.3. Các sơ đồ đối tượng
@@ -814,41 +814,41 @@ Sơ đồ đối tượng mô tả một trạng thái cụ thể của hệ th�
 
 Trạng thái minh họa khi người dùng đăng nhập thành công, hệ thống tạo phiên làm việc và ghi audit log.
 
-Nguồn PlantUML: [object_auth_session_management.puml](object_auth_session_management.puml)
+Nguồn PlantUML: [object_auth_session_management.puml](../diagrams/object/object_auth_session_management.puml)
 
 ```plantuml
-!include object_auth_session_management.puml
+!include ../diagrams/object/object_auth_session_management.puml
 ```
 
 #### 4.3.2 MFA Lifecycle
 
 Trạng thái minh họa khi người dùng đã bật MFA, có Secret Key đã xác minh và danh sách mã khôi phục.
 
-Nguồn PlantUML: [object_mfa_lifecycle.puml](object_mfa_lifecycle.puml)
+Nguồn PlantUML: [object_mfa_lifecycle.puml](../diagrams/object/object_mfa_lifecycle.puml)
 
 ```plantuml
-!include object_mfa_lifecycle.puml
+!include ../diagrams/object/object_mfa_lifecycle.puml
 ```
 
 #### 4.3.3 System Administration
 
 Trạng thái minh họa khi quản trị viên khóa tài khoản có hành vi đăng nhập sai nhiều lần, đồng thời hệ thống ghi audit log và áp dụng chính sách bảo mật.
 
-Nguồn PlantUML: [object_system_administration.puml](object_system_administration.puml)
+Nguồn PlantUML: [object_system_administration.puml](../diagrams/object/object_system_administration.puml)
 
 ```plantuml
-!include object_system_administration.puml
+!include ../diagrams/object/object_system_administration.puml
 ```
 
 #### 4.3.4 API Communication
 
 Trạng thái minh họa khi ứng dụng khách gửi request kèm access token và nhận hồ sơ người dùng sau khi token hợp lệ.
 
-Nguồn PlantUML: [object_api_communication.puml](object_api_communication.puml)
+Nguồn PlantUML: [object_api_communication.puml](../diagrams/object/object_api_communication.puml)
 
 ```plantuml
 'render-cache-bust: object-api-communication-v2
-!include object_api_communication.puml
+!include ../diagrams/object/object_api_communication.puml
 ```
 
 ## V. Mô hình hướng hành vi
@@ -861,26 +861,26 @@ Sơ đồ máy trạng thái tập trung vào vòng đời của các đối tư
 
 #### 5.1.1 Máy trạng thái tài khoản người dùng
 
-Nguồn PlantUML: [state_user_account.puml](state_user_account.puml)
+Nguồn PlantUML: [state_user_account.puml](../diagrams/state/state_user_account.puml)
 
 ```plantuml
-!include state_user_account.puml
+!include ../diagrams/state/state_user_account.puml
 ```
 
 #### 5.1.2 Máy trạng thái phiên làm việc
 
-Nguồn PlantUML: [state_user_session.puml](state_user_session.puml)
+Nguồn PlantUML: [state_user_session.puml](../diagrams/state/state_user_session.puml)
 
 ```plantuml
-!include state_user_session.puml
+!include ../diagrams/state/state_user_session.puml
 ```
 
 #### 5.1.3 Máy trạng thái MFA Profile
 
-Nguồn PlantUML: [state_mfa_profile.puml](state_mfa_profile.puml)
+Nguồn PlantUML: [state_mfa_profile.puml](../diagrams/state/state_mfa_profile.puml)
 
 ```plantuml
-!include state_mfa_profile.puml
+!include ../diagrams/state/state_mfa_profile.puml
 ```
 
 ### 5.2. Sơ đồ tuần tự
@@ -889,74 +889,74 @@ Sơ đồ tuần tự mô tả thứ tự thông điệp giữa người dùng, 
 
 #### 5.2.1 Sơ đồ tuần tự cho hoạt động: Login
 
-Nguồn PlantUML: [sequence_login.puml](sequence_login.puml)
+Nguồn PlantUML: [sequence_login.puml](../diagrams/sequence/sequence_login.puml)
 
 ```plantuml
-!include sequence_login.puml
+!include ../diagrams/sequence/sequence_login.puml
 ```
 
 #### 5.2.2 Sơ đồ tuần tự cho hoạt động: logout
 
-Nguồn PlantUML: [sequence_logout.puml](sequence_logout.puml)
+Nguồn PlantUML: [sequence_logout.puml](../diagrams/sequence/sequence_logout.puml)
 
 ```plantuml
-!include sequence_logout.puml
+!include ../diagrams/sequence/sequence_logout.puml
 ```
 
 #### 5.2.3 Sơ đồ tuần tự cho hoạt động: change-pass
 
-Nguồn PlantUML: [sequence_changepassword.puml](sequence_changepassword.puml)
+Nguồn PlantUML: [sequence_changepassword.puml](../diagrams/sequence/sequence_changepassword.puml)
 
 ```plantuml
-!include sequence_changepassword.puml
+!include ../diagrams/sequence/sequence_changepassword.puml
 ```
 
 #### 5.2.4 Sơ đồ tuần tự cho hoạt động: ClientApp -> API
 
-Nguồn PlantUML: [sequence_client_app_call_api.puml](sequence_client_app_call_api.puml)
+Nguồn PlantUML: [sequence_client_app_call_api.puml](../diagrams/sequence/sequence_client_app_call_api.puml)
 
 ```plantuml
-!include sequence_client_app_call_api.puml
+!include ../diagrams/sequence/sequence_client_app_call_api.puml
 ```
 
 #### 5.2.5 Sơ đồ tuần tự cho hoạt động: Admin lock acc
 
-Nguồn PlantUML: [sequence_admin_lock_account.puml](sequence_admin_lock_account.puml)
+Nguồn PlantUML: [sequence_admin_lock_account.puml](../diagrams/sequence/sequence_admin_lock_account.puml)
 
 ```plantuml
-!include sequence_admin_lock_account.puml
+!include ../diagrams/sequence/sequence_admin_lock_account.puml
 ```
 
 #### 5.2.6 Sơ đồ tuần tự cho hoạt động: Admin unlock acc
 
-Nguồn PlantUML: [sequence_admin_unlock_account.puml](sequence_admin_unlock_account.puml)
+Nguồn PlantUML: [sequence_admin_unlock_account.puml](../diagrams/sequence/sequence_admin_unlock_account.puml)
 
 ```plantuml
-!include sequence_admin_unlock_account.puml
+!include ../diagrams/sequence/sequence_admin_unlock_account.puml
 ```
 
 #### 5.2.7 Sơ đồ tuần tự cho hoạt động: Admin config policies
 
-Nguồn PlantUML: [sequence_admin_config_policies.puml](sequence_admin_config_policies.puml)
+Nguồn PlantUML: [sequence_admin_config_policies.puml](../diagrams/sequence/sequence_admin_config_policies.puml)
 
 ```plantuml
-!include sequence_admin_config_policies.puml
+!include ../diagrams/sequence/sequence_admin_config_policies.puml
 ```
 
 #### 5.2.8 Sơ đồ tuần tự cho hoạt động: Enable/Disable MFA
 
-Nguồn PlantUML: [sequence_mfa_enable_disable.puml](sequence_mfa_enable_disable.puml)
+Nguồn PlantUML: [sequence_mfa_enable_disable.puml](../diagrams/sequence/sequence_mfa_enable_disable.puml)
 
 ```plantuml
-!include sequence_mfa_enable_disable.puml
+!include ../diagrams/sequence/sequence_mfa_enable_disable.puml
 ```
 
 #### 5.2.9 Sơ đồ tuần tự cho hoạt động: Admin manage Session
 
-Nguồn PlantUML: [sequence_admin_manage_session.puml](sequence_admin_manage_session.puml)
+Nguồn PlantUML: [sequence_admin_manage_session.puml](../diagrams/sequence/sequence_admin_manage_session.puml)
 
 ```plantuml
-!include sequence_admin_manage_session.puml
+!include ../diagrams/sequence/sequence_admin_manage_session.puml
 ```
 
 ### 5.3. Sơ đồ giao tiếp
@@ -965,63 +965,66 @@ Sơ đồ giao tiếp nhấn mạnh các đối tượng tham gia và thứ tự
 
 #### 5.3.1 Sơ đồ giao tiếp cho hoạt động: Login
 
-Nguồn hình SVG: [communication_auth_login_staruml.svg](communication_auth_login_staruml.svg)
+Nguồn hình SVG: [communication_auth_login_staruml.svg](../diagrams/communication/communication_auth_login_staruml.svg)
 
-![Sơ đồ giao tiếp Login](communication_auth_login_staruml.svg)
+![Sơ đồ giao tiếp Login](../diagrams/communication/communication_auth_login_staruml.svg)
 
 #### 5.3.2 Sơ đồ giao tiếp cho hoạt động: Logout
 
-Nguồn hình SVG: [communication_auth_logout_staruml.svg](communication_auth_logout_staruml.svg)
+Nguồn hình SVG: [communication_auth_logout_staruml.svg](../diagrams/communication/communication_auth_logout_staruml.svg)
 
-![Sơ đồ giao tiếp Logout](communication_auth_logout_staruml.svg)
+![Sơ đồ giao tiếp Logout](../diagrams/communication/communication_auth_logout_staruml.svg)
 
 #### 5.3.3 Sơ đồ giao tiếp cho hoạt động: Admin lock account
 
-Nguồn hình SVG: [communication_admin_lock_account_staruml.svg](communication_admin_lock_account_staruml.svg)
+Nguồn hình SVG: [communication_admin_lock_account_staruml.svg](../diagrams/communication/communication_admin_lock_account_staruml.svg)
 
-![Sơ đồ giao tiếp Admin lock account](communication_admin_lock_account_staruml.svg)
+![Sơ đồ giao tiếp Admin lock account](../diagrams/communication/communication_admin_lock_account_staruml.svg)
 
 #### 5.3.4 Sơ đồ giao tiếp cho hoạt động: Admin unlock account
 
-Nguồn hình SVG: [communication_admin_unlock_account_staruml.svg](communication_admin_unlock_account_staruml.svg)
+Nguồn hình SVG: [communication_admin_unlock_account_staruml.svg](../diagrams/communication/communication_admin_unlock_account_staruml.svg)
 
-![Sơ đồ giao tiếp Admin unlock account](communication_admin_unlock_account_staruml.svg)
+![Sơ đồ giao tiếp Admin unlock account](../diagrams/communication/communication_admin_unlock_account_staruml.svg)
 
 #### 5.3.5 Sơ đồ giao tiếp cho hoạt động: Admin manage Session
 
-Nguồn hình SVG: [communication_admin_manage_session_staruml.svg](communication_admin_manage_session_staruml.svg)
+Nguồn hình SVG: [communication_admin_manage_session_staruml.svg](../diagrams/communication/communication_admin_manage_session_staruml.svg)
 
-![Sơ đồ giao tiếp Admin manage Session](communication_admin_manage_session_staruml.svg)
+![Sơ đồ giao tiếp Admin manage Session](../diagrams/communication/communication_admin_manage_session_staruml.svg)
 
 #### 5.3.6 Sơ đồ giao tiếp cho hoạt động: Admin config policy
 
-Nguồn hình SVG: [communication_admin_config_policy_staruml.svg](communication_admin_config_policy_staruml.svg)
+Nguồn hình SVG: [communication_admin_config_policy_staruml.svg](../diagrams/communication/communication_admin_config_policy_staruml.svg)
 
-![Sơ đồ giao tiếp Admin config policy](communication_admin_config_policy_staruml.svg)
+![Sơ đồ giao tiếp Admin config policy](../diagrams/communication/communication_admin_config_policy_staruml.svg)
 
 #### 5.3.7 Sơ đồ giao tiếp cho hoạt động: Enable MFA
 
-Nguồn hình SVG: [communication_mfa_enable_staruml.svg](communication_mfa_enable_staruml.svg)
+Nguồn hình SVG: [communication_mfa_enable_staruml.svg](../diagrams/communication/communication_mfa_enable_staruml.svg)
 
-![Sơ đồ giao tiếp Enable MFA](communication_mfa_enable_staruml.svg)
+![Sơ đồ giao tiếp Enable MFA](../diagrams/communication/communication_mfa_enable_staruml.svg)
 
 #### 5.3.8 Sơ đồ giao tiếp cho hoạt động: Disable MFA
 
-Nguồn hình SVG: [communication_mfa_disable_staruml.svg](communication_mfa_disable_staruml.svg)
+Nguồn hình SVG: [communication_mfa_disable_staruml.svg](../diagrams/communication/communication_mfa_disable_staruml.svg)
 
-![Sơ đồ giao tiếp Disable MFA](communication_mfa_disable_staruml.svg)
+![Sơ đồ giao tiếp Disable MFA](../diagrams/communication/communication_mfa_disable_staruml.svg)
 
 #### 5.3.9 Sơ đồ giao tiếp cho hoạt động: Change_password
 
-Nguồn hình SVG: [communication_auth_change_password_staruml.svg](communication_auth_change_password_staruml.svg)
+Nguồn hình SVG: [communication_auth_change_password_staruml.svg](../diagrams/communication/communication_auth_change_password_staruml.svg)
 
-![Sơ đồ giao tiếp Change password](communication_auth_change_password_staruml.svg)
+![Sơ đồ giao tiếp Change password](../diagrams/communication/communication_auth_change_password_staruml.svg)
 
 #### 5.3.10 Sơ đồ giao tiếp cho hoạt động: ClientApp gọi API
 
-Nguồn hình SVG: [communication_client_app_call_api_staruml.svg](communication_client_app_call_api_staruml.svg)
+Nguồn hình SVG: [communication_client_app_call_api_staruml.svg](../diagrams/communication/communication_client_app_call_api_staruml.svg)
 
-![Sơ đồ giao tiếp ClientApp gọi API](communication_client_app_call_api_staruml.svg)
+![Sơ đồ giao tiếp ClientApp gọi API](../diagrams/communication/communication_client_app_call_api_staruml.svg)
+
+
+
 
 
 

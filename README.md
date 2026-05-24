@@ -67,8 +67,19 @@ cho môi trường ứng dụng nội bộ hoặc ứng dụng khách tích hợ
 ```
 Identity-And-Management-System/
 ├── docs/
-│   ├── PT_TKHT.md          # Báo cáo phân tích và thiết kế hệ thống
-│   └── class_diagram.puml  # Sơ đồ lớp (PlantUML)
+│   ├── README.md           # Bản đồ thư mục tài liệu và sơ đồ
+│   ├── reports/            # Báo cáo, SRS
+│   ├── planning/           # Phân công, kế hoạch làm việc
+│   └── diagrams/
+│       ├── use-case/       # Use case diagrams
+│       ├── activity/       # Activity diagrams
+│       ├── class/          # Class diagrams
+│       ├── sequence/       # Sequence diagrams
+│       ├── communication/  # Communication diagrams và ảnh SVG
+│       ├── object/         # Object diagrams
+│       └── state/          # State diagrams
+├── tools/
+│   └── plantuml/           # PlantUML renderer
 └── README.md
 ```
 
