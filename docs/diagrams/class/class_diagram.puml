@@ -1,0 +1,933 @@
+@startuml IAM_MFA_Class_Diagram
+
+title IAM/MFA System - Enterprise Class Diagram with DAM/DAO
+
+top to bottom direction
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+skinparam nodesep 45
+skinparam ranksep 65
+hide circle
+
+' ===== ENUMS =====
+
+enum UserStatus {
+  PENDING
+  ACTIVE
+  LOCKED
+  INACTIVE
+}
+
+enum MfaType {
+  TOTP
+  WEBAUTHN
+}
+
+enum TokenType {
+  ACCESS_TOKEN
+  REFRESH_TOKEN
+}
+
+enum ClientType {
+  PUBLIC
+  CONFIDENTIAL
+}
+
+enum CodeChallengeMethod {
+  PLAIN
+  S256
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum SensitivityLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum AuditAction {
+  LOGIN
+  LOGIN_FAILED
+  LOGOUT
+  MFA_ENABLED
+  MFA_DISABLED
+  MFA_VERIFIED
+  PASSWORD_CHANGED
+  USER_LOCKED
+  USER_UNLOCKED
+  ROLE_ASSIGNED
+  ROLE_REVOKED
+  TOKEN_ISSUED
+  TOKEN_REVOKED
+  REFRESH_TOKEN_ROTATED
+  REFRESH_TOKEN_REUSE_DETECTED
+  STEP_UP_REQUIRED
+}
+
+enum ChallengeStatus {
+  PENDING
+  VERIFIED
+  EXPIRED
+  FAILED
+}
+
+enum DomainEventType {
+  LOGIN_SUCCEEDED
+  LOGIN_FAILED
+  LOGOUT
+  PASSWORD_CHANGED
+  USER_LOCKED
+  USER_UNLOCKED
+  MFA_ENABLED
+  MFA_DISABLED
+  MFA_VERIFIED
+  TOKEN_ISSUED
+  TOKEN_REVOKED
+  REFRESH_TOKEN_ROTATED
+  REFRESH_TOKEN_REUSE_DETECTED
+  ROLE_ASSIGNED
+  ROLE_REVOKED
+  STEP_UP_REQUIRED
+}
+
+' ===== DOMAIN ENTITIES =====
+
+class User <<Entity>> {
+  - id: String
+  - username: String
+  - email: String
+  - passwordHash: String
+  - status: UserStatus
+  - failedLoginAttempts: Integer
+  - version: Long
+  - lastLoginAt: DateTime
+  - passwordChangedAt: DateTime
+  - createdAt: DateTime
+  - updatedAt: DateTime
+  --
+  + changePassword(oldPassword: String, newPassword: String): Boolean
+  + lockAccount(): void
+  + unlockAccount(): void
+  + resetFailedAttempts(): void
+}
+
+class Role <<Entity>> {
+  - id: String
+  - roleName: String
+  - description: String
+  - isActive: Boolean
+  - createdAt: DateTime
+  - updatedAt: DateTime
+  --
+  + assignPermission(permission: Permission): void
+  + revokePermission(permission: Permission): void
+}
+
+class Permission <<Entity>> {
+  - id: String
+  - permissionName: String
+  - resource: String
+  - action: String
+  - sensitivityLevel: SensitivityLevel
+  - isActive: Boolean
+  --
+  + matches(resource: String, action: String): Boolean
+  + requiresStepUpAuth(): Boolean
+}
+
+class UserRole <<Association Entity>> {
+  - userId: String
+  - roleId: String
+  - assignedAt: DateTime
+  - assignedBy: String
+}
+
+class RolePermission <<Association Entity>> {
+  - roleId: String
+  - permissionId: String
+  - grantedAt: DateTime
+  - grantedBy: String
+}
+
+class PasswordHistory <<Entity>> {
+  - id: String
+  - userId: String
+  - passwordHash: String
+  - createdAt: DateTime
+  --
+  + isPasswordReused(newPasswordHash: String): Boolean
+}
+
+class PasswordResetToken <<Entity>> {
+  - id: String
+  - userId: String
+  - tokenHash: String
+  - expiresAt: DateTime
+  - usedAt: DateTime
+  - createdAt: DateTime
+  --
+  + isExpired(): Boolean
+  + markUsed(): void
+}
+
+abstract class MfaCredential <<Entity>> {
+  - id: String
+  - userId: String
+  - mfaType: MfaType
+  - isVerified: Boolean
+  - lastVerifiedAt: DateTime
+  - createdAt: DateTime
+  - updatedAt: DateTime
+  --
+  + verify(proof: String): Boolean
+  + enable(): void
+  + disable(): void
+}
+
+class TotpCredential <<Entity>> {
+  - secretKeyEncrypted: String
+  - algorithm: String
+  - digits: Integer
+  - periodSeconds: Integer
+  --
+  + verify(proof: String): Boolean
+}
+
+class WebAuthnCredential <<Entity>> {
+  - credentialId: String
+  - publicKey: String
+  - signCount: Long
+  - aaguid: String
+  - transports: List~String~
+  - attestationType: String
+  --
+  + verify(proof: String): Boolean
+  + updateSignCount(newSignCount: Long): void
+  + isCloneSuspected(newSignCount: Long): Boolean
+}
+
+class RecoveryCodeSet <<Entity>> {
+  - id: String
+  - userId: String
+  - mfaCredentialId: String
+  - generatedAt: DateTime
+  - invalidatedAt: DateTime
+  - codesRemaining: Integer
+  --
+  + regenerate(): List~RecoveryCode~
+  + invalidate(): void
+  + isActive(): Boolean
+}
+
+class RecoveryCode <<Entity>> {
+  - id: String
+  - recoveryCodeSetId: String
+  - codeHash: String
+  - isUsed: Boolean
+  - usedAt: DateTime
+  - createdAt: DateTime
+  --
+  + verify(plainCode: String): Boolean
+  + markUsed(): void
+}
+
+class MfaChallenge <<Entity>> {
+  - id: String
+  - userId: String
+  - mfaCredentialId: String
+  - challengeType: MfaType
+  - status: ChallengeStatus
+  - attemptCount: Integer
+  - maxAttempts: Integer
+  - version: Long
+  - expiresAt: DateTime
+  - verifiedAt: DateTime
+  - createdAt: DateTime
+  --
+  + canAttempt(): Boolean
+  + recordFailedAttempt(): void
+  + verify(proof: String): Boolean
+  + expire(): void
+}
+
+class OAuth2Client <<Entity>> {
+  - id: String
+  - clientId: String
+  - clientName: String
+  - clientType: ClientType
+  - clientSecretHash: String
+  - redirectUri: String
+  - grantTypes: List~String~
+  - pkceRequired: Boolean
+  - isActive: Boolean
+  - createdAt: DateTime
+  - updatedAt: DateTime
+  --
+  + authenticateClient(clientSecret: String): Boolean
+  + validateRedirectUri(redirectUri: String): Boolean
+  + requiresPkce(): Boolean
+  + revokeClient(): void
+}
+
+class OAuth2Scope <<Entity>> {
+  - id: String
+  - scopeName: String
+  - description: String
+  - resource: String
+  - sensitivityLevel: SensitivityLevel
+  - isActive: Boolean
+  --
+  + matches(scopeName: String): Boolean
+  + requiresStepUpAuth(): Boolean
+}
+
+class AuthorizationCode <<Entity>> {
+  - id: String
+  - userId: String
+  - oauth2ClientId: String
+  - userSessionId: String
+  - codeHash: String
+  - nonce: String
+  - redirectUri: String
+  - scopes: List~String~
+  - codeChallenge: String
+  - codeChallengeMethod: CodeChallengeMethod
+  - issuedAt: DateTime
+  - expiresAt: DateTime
+  - consumedAt: DateTime
+  --
+  + isExpired(): Boolean
+  + isConsumed(): Boolean
+  + verifyPkce(codeVerifier: String): Boolean
+  + consume(): void
+}
+
+abstract class OAuth2Token <<Entity>> {
+  - id: String
+  - userId: String
+  - oauth2ClientId: String
+  - userSessionId: String
+  - grantType: String
+  - tokenHash: String
+  - tokenType: TokenType
+  - scopes: List~String~
+  - issuedAt: DateTime
+  - expiresAt: DateTime
+  - revokedAt: DateTime
+  --
+  + isExpired(): Boolean
+  + isRevoked(): Boolean
+  + revoke(): void
+}
+
+class AccessToken <<Entity>> {
+  - audience: String
+  - permissions: List~String~
+  - introspectionRequired: Boolean
+  --
+  + allows(resource: String, action: String): Boolean
+}
+
+class RefreshToken <<Entity>> {
+  - refreshTokenFamilyId: String
+  - parentTokenId: String
+  - rotatedToTokenId: String
+  - consumedAt: DateTime
+  - reuseDetectedAt: DateTime
+  - version: Long
+  --
+  + isConsumed(): Boolean
+  + rotateTo(newRefreshToken: RefreshToken): void
+  + markReuseDetected(): void
+}
+
+class IdToken <<Value Object>> {
+  - issuer: String
+  - subject: String
+  - audience: String
+  - issuedAt: DateTime
+  - expiresAt: DateTime
+  - nonce: String
+  - acr: String
+  - amr: List~String~
+  - claims: Map~String,Object~
+  --
+  + buildJwt(): String
+}
+
+class RefreshTokenFamily <<Entity>> {
+  - id: String
+  - userId: String
+  - oauth2ClientId: String
+  - userSessionId: String
+  - currentRefreshTokenId: String
+  - version: Long
+  - revokedAt: DateTime
+  - reuseDetectedAt: DateTime
+  - createdAt: DateTime
+  - updatedAt: DateTime
+  --
+  + rotate(currentToken: RefreshToken, newToken: RefreshToken): void
+  + detectReuse(token: RefreshToken): Boolean
+  + revokeFamily(reason: String): void
+}
+
+class UserSession <<Entity>> {
+  - id: String
+  - userId: String
+  - oauth2ClientId: String
+  - deviceFingerprintId: String
+  - ipAddress: String
+  - userAgent: String
+  - expiresAt: DateTime
+  - isRevoked: Boolean
+  - lastAccessedAt: DateTime
+  - createdAt: DateTime
+  --
+  + isSessionValid(): Boolean
+  + refreshSession(): void
+  + revokeSession(): void
+}
+
+class DeviceFingerprint <<Entity>> {
+  - id: String
+  - userId: String
+  - deviceHash: String
+  - signalHash: String
+  - userAgent: String
+  - ipAddress: String
+  - os: String
+  - browser: String
+  - geoCountry: String
+  - confidenceScore: Decimal
+  - trusted: Boolean
+  - firstSeenAt: DateTime
+  - lastSeenAt: DateTime
+  - expiresAt: DateTime
+  --
+  + matches(signalHash: String): Boolean
+  + markTrusted(): void
+}
+
+class TrustedDevice <<Entity>> {
+  - id: String
+  - userId: String
+  - deviceFingerprintId: String
+  - trustedUntil: DateTime
+  - revokedAt: DateTime
+  - createdAt: DateTime
+  --
+  + isTrusted(): Boolean
+  + revoke(): void
+}
+
+class LoginHistory <<Entity>> {
+  - id: String
+  - userId: String
+  - deviceFingerprintId: String
+  - timestamp: DateTime
+  - userAgent: String
+  - ipAddress: String
+  - riskLevel: RiskLevel
+  - loginSuccessful: Boolean
+  - failureReason: String
+  --
+  + recordAttempt(): void
+  + isAnomalous(): Boolean
+}
+
+class SecurityPolicy <<Entity>> {
+  - id: String
+  - tenantId: String
+  - policyName: String
+  - maxLoginAttempts: Integer
+  - maxMfaAttempts: Integer
+  - passwordHistoryLimit: Integer
+  - lockoutDurationMinutes: Integer
+  - sessionTimeoutMinutes: Integer
+  - maxConcurrentSessions: Integer
+  - mfaRequired: Boolean
+  - riskMfaThreshold: RiskLevel
+  - stepUpSensitivityThreshold: SensitivityLevel
+  - isActive: Boolean
+  --
+  + isLockoutRequired(failedAttempts: Integer): Boolean
+  + requiresMfa(riskLevel: RiskLevel): Boolean
+  + requiresStepUp(permission: Permission): Boolean
+}
+
+class AuditLog <<Entity>> {
+  - id: String
+  - userId: String
+  - sessionId: String
+  - action: AuditAction
+  - detail: String
+  - ipAddress: String
+  - userAgent: String
+  - previousLogHash: String
+  - logHash: String
+  - signature: String
+  - timestamp: DateTime
+  --
+  + logEvent(): void
+  + verifyIntegrity(previousLog: AuditLog): Boolean
+}
+
+class SigningKey <<External KMS>> {
+  - keyId: String
+  - algorithm: String
+  - activeFrom: DateTime
+  - expiresAt: DateTime
+  --
+  + sign(payload: String): String
+  + verify(payload: String, signature: String): Boolean
+}
+
+' ===== APPLICATION SERVICES =====
+
+class AuthenticationService <<Service>> {
+  + login(username: String, password: String, device: DeviceFingerprint): UserSession
+  + logout(sessionId: String): void
+  + changePassword(userId: String, oldPassword: String, newPassword: String): Boolean
+  + requestPasswordReset(email: String): PasswordResetToken
+  + resetPassword(token: String, newPassword: String): Boolean
+}
+
+class OAuth2AuthorizationService <<Service>> {
+  + authorize(clientId: String, userId: String, scopes: List~String~): AuthorizationCode
+  + exchangeCode(code: String, codeVerifier: String): AccessToken
+  + refresh(refreshToken: String): AccessToken
+  + validateToken(token: String): Boolean
+  + revokeToken(tokenId: String): void
+}
+
+class TokenIntrospectionService <<Service>> {
+  + introspect(token: String): Boolean
+  + resolvePermissions(token: AccessToken): List~Permission~
+}
+
+class MfaService <<Service>> {
+  + enrollTotp(userId: String): TotpCredential
+  + enrollWebAuthn(userId: String, publicKey: String): WebAuthnCredential
+  + createChallenge(userId: String, type: MfaType): MfaChallenge
+  + verify(userId: String, proof: String): Boolean
+  + regenerateRecoveryCodes(userId: String, credentialId: String): RecoveryCodeSet
+  + disable(userId: String, credentialId: String): void
+}
+
+class SecurityEngine <<Service>> {
+  + assessLogin(user: User, device: DeviceFingerprint): RiskLevel
+  + requiresStepUp(permission: Permission): Boolean
+  + enforce(user: User, policy: SecurityPolicy): void
+}
+
+class UserManagementService <<Service>> {
+  + createUser(username: String, email: String): User
+  + lockUser(userId: String): void
+  + unlockUser(userId: String): void
+  + assignRole(userId: String, roleId: String): void
+  + revokeRole(userId: String, roleId: String): void
+}
+
+class AuthorizationService <<Service>> {
+  + hasPermission(userId: String, resource: String, action: String): Boolean
+  + getEffectivePermissions(userId: String): List~Permission~
+  + requiresStepUp(userId: String, permission: Permission): Boolean
+}
+
+class RiskEvaluationService <<Service>> {
+  + evaluate(device: DeviceFingerprint, history: List~LoginHistory~): RiskLevel
+  + detectAnomaly(device: DeviceFingerprint): Boolean
+}
+
+class PolicyEnforcementService <<Service>> {
+  + enforceLoginPolicy(user: User): void
+  + enforceMfaPolicy(challenge: MfaChallenge): void
+  + enforcePasswordPolicy(user: User, newPassword: String): void
+}
+
+class DomainEvent <<Event>> {
+  - id: String
+  - eventType: DomainEventType
+  - aggregateId: String
+  - aggregateType: String
+  - occurredAt: DateTime
+  - correlationId: String
+  - causationId: String
+  --
+  + serialize(): String
+}
+
+class LoginFailedEvent <<Event>> {
+  - userId: String
+  - username: String
+  - ipAddress: String
+  - failureReason: String
+  - riskLevel: RiskLevel
+}
+
+class MfaVerifiedEvent <<Event>> {
+  - userId: String
+  - mfaCredentialId: String
+  - challengeId: String
+  - mfaType: MfaType
+}
+
+class RefreshTokenReusedEvent <<Event>> {
+  - userId: String
+  - oauth2ClientId: String
+  - refreshTokenFamilyId: String
+  - reusedTokenId: String
+  - sessionId: String
+}
+
+interface EventBus <<Messaging>> {
+  + publish(event: DomainEvent): void
+  + subscribe(eventType: DomainEventType, handler: EventHandler): void
+}
+
+interface EventHandler <<Messaging>> {
+  + handle(event: DomainEvent): void
+}
+
+class DomainEventPublisher <<Service>> {
+  + publish(event: DomainEvent): void
+  + publishAll(events: List~DomainEvent~): void
+}
+
+class AuditEventHandler <<EventHandler>> {
+  + handle(event: DomainEvent): void
+}
+
+class NotificationEventHandler <<EventHandler>> {
+  + handle(event: DomainEvent): void
+}
+
+class SiemEventHandler <<EventHandler>> {
+  + handle(event: DomainEvent): void
+}
+
+class AnalyticsEventHandler <<EventHandler>> {
+  + handle(event: DomainEvent): void
+}
+
+' ===== DAM / DAO LAYER =====
+
+interface UserRepository <<Repository>> {
+  + findById(id: String): User
+  + findByUsername(username: String): User
+  + save(user: User): void
+  + updateStatus(userId: String, status: UserStatus): void
+}
+
+interface RoleRepository <<Repository>> {
+  + findRolesByUserId(userId: String): List~Role~
+  + assignRole(userRole: UserRole): void
+  + removeRole(userId: String, roleId: String): void
+  + save(role: Role): void
+}
+
+interface PermissionRepository <<Repository>> {
+  + findPermissionsByRoleId(roleId: String): List~Permission~
+  + grantPermission(rolePermission: RolePermission): void
+  + revokePermission(roleId: String, permissionId: String): void
+  + save(permission: Permission): void
+}
+
+interface PasswordResetTokenRepository <<Repository>> {
+  + findByTokenHash(tokenHash: String): PasswordResetToken
+  + save(token: PasswordResetToken): void
+  + markUsed(tokenId: String): void
+}
+
+interface MfaCredentialRepository <<Repository>> {
+  + findByUserId(userId: String): List~MfaCredential~
+  + save(credential: MfaCredential): void
+  + delete(id: String): void
+}
+
+interface RecoveryCodeSetRepository <<Repository>> {
+  + findActiveByCredentialId(credentialId: String): RecoveryCodeSet
+  + save(codeSet: RecoveryCodeSet): void
+  + invalidateByCredentialId(credentialId: String): void
+}
+
+interface MfaChallengeRepository <<Repository>> {
+  + findActiveByUserId(userId: String): MfaChallenge
+  + save(challenge: MfaChallenge): void
+  + updateStatus(challengeId: String, status: ChallengeStatus): void
+}
+
+interface OAuth2ClientRepository <<Repository>> {
+  + findByClientId(clientId: String): OAuth2Client
+  + save(client: OAuth2Client): void
+  + deactivate(clientId: String): void
+}
+
+interface OAuth2ScopeRepository <<Repository>> {
+  + findByScopeName(scopeName: String): OAuth2Scope
+  + findAllowedByClientId(clientId: String): List~OAuth2Scope~
+  + save(scope: OAuth2Scope): void
+}
+
+interface AuthorizationCodeRepository <<Repository>> {
+  + findByCodeHash(codeHash: String): AuthorizationCode
+  + save(code: AuthorizationCode): void
+  + consume(codeId: String): void
+}
+
+interface AccessTokenRepository <<Repository>> {
+  + findByTokenHash(tokenHash: String): AccessToken
+  + save(token: AccessToken): void
+  + revoke(tokenId: String): void
+  + deleteExpired(): Integer
+}
+
+interface RefreshTokenRepository <<Repository>> {
+  + findByTokenHash(tokenHash: String): RefreshToken
+  + findByFamilyId(familyId: String): List~RefreshToken~
+  + save(token: RefreshToken): void
+  + revoke(tokenId: String): void
+  + revokeFamily(familyId: String): void
+}
+
+interface RefreshTokenFamilyRepository <<Repository>> {
+  + findById(id: String): RefreshTokenFamily
+  + findActiveByUserAndClient(userId: String, clientId: String): RefreshTokenFamily
+  + save(family: RefreshTokenFamily): void
+  + revoke(familyId: String): void
+}
+
+interface UserSessionRepository <<Repository>> {
+  + findById(id: String): UserSession
+  + findActiveByUserId(userId: String): List~UserSession~
+  + save(session: UserSession): void
+  + revoke(sessionId: String): void
+}
+
+interface DeviceTrustRepository <<Repository>> {
+  + findDeviceByHash(deviceHash: String): DeviceFingerprint
+  + saveDevice(device: DeviceFingerprint): void
+  + findTrustedDevice(userId: String, deviceFingerprintId: String): TrustedDevice
+  + saveTrustedDevice(device: TrustedDevice): void
+  + findRecentLoginHistory(userId: String): List~LoginHistory~
+  + saveLoginHistory(history: LoginHistory): void
+}
+
+interface SecurityPolicyRepository <<Repository>> {
+  + findActivePolicy(): SecurityPolicy
+  + save(policy: SecurityPolicy): void
+}
+
+interface AuditLogRepository <<Repository>> {
+  + save(log: AuditLog): void
+  + findByUserId(userId: String): List~AuditLog~
+}
+
+interface EventStoreRepository <<Repository>> {
+  + append(event: DomainEvent): void
+  + findByAggregateId(aggregateId: String): List~DomainEvent~
+}
+
+' ===== LAYOUT HINTS =====
+
+together {
+  class User
+  class Role
+  class Permission
+  class UserRole
+  class RolePermission
+  class UserManagementService
+  class AuthorizationService
+}
+
+together {
+  class MfaCredential
+  class TotpCredential
+  class WebAuthnCredential
+  class RecoveryCodeSet
+  class RecoveryCode
+  class MfaChallenge
+  class MfaService
+}
+
+together {
+  class OAuth2Client
+  class OAuth2Scope
+  class OAuth2Token
+  class AccessToken
+  class RefreshToken
+  class IdToken
+  class AuthorizationCode
+  class RefreshTokenFamily
+  class UserSession
+  class OAuth2AuthorizationService
+  class TokenIntrospectionService
+}
+
+together {
+  class DeviceFingerprint
+  class TrustedDevice
+  class LoginHistory
+  class SecurityPolicy
+  class SecurityEngine
+  class RiskEvaluationService
+  class PolicyEnforcementService
+}
+
+together {
+  class DomainEvent
+  class LoginFailedEvent
+  class MfaVerifiedEvent
+  class RefreshTokenReusedEvent
+  class DomainEventPublisher
+  interface EventBus
+}
+
+' ===== RELATIONSHIPS =====
+
+User --> UserStatus
+Permission --> SensitivityLevel
+MfaCredential --> MfaType
+MfaChallenge --> MfaType
+MfaChallenge --> ChallengeStatus
+OAuth2Token --> TokenType
+OAuth2Client --> ClientType
+AuthorizationCode --> CodeChallengeMethod
+OAuth2Scope --> SensitivityLevel
+LoginHistory --> RiskLevel
+SecurityPolicy --> RiskLevel
+SecurityPolicy --> SensitivityLevel
+AuditLog --> AuditAction
+DomainEvent --> DomainEventType
+AuditLog ..> SigningKey
+
+User " 1 " -- " 0..* " UserRole
+Role " 1 " -- " 0..* " UserRole
+Role " 1 " -- " 0..* " RolePermission
+Permission " 1 " -- " 0..* " RolePermission
+
+User " 1 " *-- " 0..* " PasswordHistory
+User " 1 " o-- " 0..* " PasswordResetToken
+User " 1 " o-- " 0..* " MfaCredential
+TotpCredential --|> MfaCredential
+WebAuthnCredential --|> MfaCredential
+MfaCredential " 1 " *-- " 0..* " RecoveryCodeSet
+RecoveryCodeSet " 1 " *-- " 0..* " RecoveryCode
+MfaCredential " 1 " -- " 0..* " MfaChallenge
+User " 1 " -- " 0..* " MfaChallenge
+
+User " 1 " o-- " 0..* " UserSession
+OAuth2Client " 0..* " -- " 0..* " OAuth2Scope
+OAuth2Client " 1 " -- " 0..* " UserSession
+UserSession " 1 " -- " 0..* " OAuth2Token
+OAuth2Client " 1 " -- " 0..* " OAuth2Token
+User " 1 " -- " 0..* " OAuth2Token
+AccessToken --|> OAuth2Token
+RefreshToken --|> OAuth2Token
+OAuth2Client " 1 " -- " 0..* " AuthorizationCode
+UserSession " 1 " -- " 0..* " AuthorizationCode
+RefreshTokenFamily " 1 " *-- " 0..* " RefreshToken
+RefreshToken " 0..1 parent " -- " 0..1 rotatedTo " RefreshToken
+User " 1 " -- " 0..* " RefreshTokenFamily
+OAuth2Client " 1 " -- " 0..* " RefreshTokenFamily
+UserSession " 1 " -- " 0..1 " RefreshTokenFamily
+
+User " 1 " -- " 0..* " DeviceFingerprint
+User " 1 " -- " 0..* " TrustedDevice
+DeviceFingerprint " 1 " -- " 0..* " TrustedDevice
+DeviceFingerprint " 0..1 " -- " 0..* " UserSession
+DeviceFingerprint " 1 " -- " 0..* " LoginHistory
+User " 1 " -- " 0..* " LoginHistory
+User " 1 " -- " 0..* " AuditLog
+UserSession " 0..1 " -- " 0..* " AuditLog
+
+LoginFailedEvent --|> DomainEvent
+MfaVerifiedEvent --|> DomainEvent
+RefreshTokenReusedEvent --|> DomainEvent
+LoginFailedEvent --> RiskLevel
+MfaVerifiedEvent --> MfaType
+DomainEventPublisher ..> EventBus
+DomainEventPublisher ..> EventStoreRepository
+EventBus ..> EventHandler
+AuditEventHandler ..|> EventHandler
+NotificationEventHandler ..|> EventHandler
+SiemEventHandler ..|> EventHandler
+AnalyticsEventHandler ..|> EventHandler
+AuditEventHandler ..> AuditLogRepository
+
+AuthenticationService ..> UserRepository
+AuthenticationService ..> PasswordResetTokenRepository
+AuthenticationService ..> UserSessionRepository
+AuthenticationService ..> DeviceTrustRepository
+AuthenticationService ..> SecurityEngine
+AuthenticationService ..> AuditLogRepository
+AuthenticationService ..> DomainEventPublisher
+
+OAuth2AuthorizationService ..> OAuth2ClientRepository
+OAuth2AuthorizationService ..> OAuth2ScopeRepository
+OAuth2AuthorizationService ..> AuthorizationCodeRepository
+OAuth2AuthorizationService ..> AccessTokenRepository
+OAuth2AuthorizationService ..> RefreshTokenRepository
+OAuth2AuthorizationService ..> RefreshTokenFamilyRepository
+OAuth2AuthorizationService ..> UserSessionRepository
+OAuth2AuthorizationService ..> DomainEventPublisher
+OAuth2AuthorizationService ..> IdToken
+
+TokenIntrospectionService ..> AccessTokenRepository
+TokenIntrospectionService ..> PermissionRepository
+
+MfaService ..> MfaCredentialRepository
+MfaService ..> RecoveryCodeSetRepository
+MfaService ..> MfaChallengeRepository
+MfaService ..> UserRepository
+MfaService ..> DomainEventPublisher
+
+SecurityEngine ..> SecurityPolicyRepository
+SecurityEngine ..> RiskEvaluationService
+SecurityEngine ..> PolicyEnforcementService
+SecurityEngine ..> SecurityPolicy
+SecurityEngine ..> DeviceFingerprint
+SecurityEngine ..> LoginHistory
+SecurityEngine ..> Permission
+
+UserManagementService ..> UserRepository
+UserManagementService ..> RoleRepository
+UserManagementService ..> DomainEventPublisher
+
+AuthorizationService ..> RoleRepository
+AuthorizationService ..> PermissionRepository
+AuthorizationService ..> SecurityEngine
+
+UserRepository ..> User
+RoleRepository ..> Role
+RoleRepository ..> UserRole
+PermissionRepository ..> Permission
+PermissionRepository ..> RolePermission
+PasswordResetTokenRepository ..> PasswordResetToken
+MfaCredentialRepository ..> MfaCredential
+RecoveryCodeSetRepository ..> RecoveryCodeSet
+MfaChallengeRepository ..> MfaChallenge
+OAuth2ClientRepository ..> OAuth2Client
+OAuth2ScopeRepository ..> OAuth2Scope
+AuthorizationCodeRepository ..> AuthorizationCode
+AccessTokenRepository ..> AccessToken
+RefreshTokenRepository ..> RefreshToken
+RefreshTokenFamilyRepository ..> RefreshTokenFamily
+UserSessionRepository ..> UserSession
+DeviceTrustRepository ..> DeviceFingerprint
+DeviceTrustRepository ..> TrustedDevice
+DeviceTrustRepository ..> LoginHistory
+SecurityPolicyRepository ..> SecurityPolicy
+AuditLogRepository ..> AuditLog
+EventStoreRepository ..> DomainEvent
+
+@enduml
