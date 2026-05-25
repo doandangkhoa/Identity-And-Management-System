@@ -39,6 +39,38 @@ enum CodeChallengeMethod {
   S256
 }
 
+enum GrantType {
+  AUTHORIZATION_CODE
+  REFRESH_TOKEN
+  CLIENT_CREDENTIALS
+  TOKEN_EXCHANGE
+}
+
+enum AuthenticatorTransport {
+  USB
+  NFC
+  BLE
+  INTERNAL
+}
+
+enum AuthenticationMethod {
+  PASSWORD
+  TOTP
+  WEBAUTHN
+  RECOVERY_CODE
+}
+
+enum AggregateType {
+  USER
+  USER_SESSION
+  MFA_CREDENTIAL
+  MFA_CHALLENGE
+  OAUTH2_TOKEN
+  REFRESH_TOKEN_FAMILY
+  USER_ROLE
+  ROLE_PERMISSION
+}
+
 enum RiskLevel {
   LOW
   MEDIUM
@@ -106,16 +138,14 @@ class User <<Entity>> {
   - email: String
   - passwordHash: String
   - status: UserStatus
-  - failedLoginAttempts: Integer
   - version: Long
   - lastLoginAt: DateTime
   - createdAt: DateTime
   - updatedAt: DateTime
   --
-  + changePassword(oldPassword: String, newPassword: String): Boolean
+  + updatePasswordHash(newPasswordHash: String): void
   + lockAccount(): void
   + unlockAccount(): void
-  + resetFailedAttempts(): void
 }
 
 class Role <<Entity>> {
@@ -161,6 +191,25 @@ class ClientScopeGrant <<Association Entity>> {
   - oauth2ScopeId: String
   - grantedAt: DateTime
   - grantedBy: String
+}
+
+class ScopePermission <<Association Entity>> {
+  - oauth2ScopeId: String
+  - permissionId: String
+  - grantedAt: DateTime
+  - grantedBy: String
+}
+
+class UserConsent <<Entity>> {
+  - id: String
+  - userId: String
+  - oauth2ClientId: String
+  - grantedScopeNames: List~String~
+  - grantedAt: DateTime
+  - revokedAt: DateTime
+  --
+  + isActive(): Boolean
+  + revoke(): void
 }
 
 class PasswordHistory <<Entity>> {
@@ -212,7 +261,7 @@ class WebAuthnCredential <<Entity>> {
   - publicKey: String
   - signCount: Long
   - aaguid: String
-  - transports: List~String~
+  - transports: List~AuthenticatorTransport~
   - attestationType: String
   --
   + verify(proof: String): Boolean
@@ -297,7 +346,6 @@ class AuthorizationCode <<Entity>> {
   - id: String
   - userId: String
   - oauth2ClientId: String
-  - userSessionId: String
   - codeHash: String
   - nonce: String
   - redirectUri: String
@@ -319,7 +367,7 @@ abstract class OAuth2Token <<Entity>> {
   - userId: String
   - oauth2ClientId: String
   - userSessionId: String
-  - grantType: String
+  - grantType: GrantType
   - tokenHash: String
   - tokenType: TokenType
   - grantedScopeNames: List~String~
@@ -343,7 +391,6 @@ class AccessToken <<Entity>> {
 class RefreshToken <<Entity>> {
   - refreshTokenFamilyId: String
   - parentTokenId: String
-  - rotatedToTokenId: String
   - consumedAt: DateTime
   - reuseDetectedAt: DateTime
   - version: Long
@@ -361,17 +408,14 @@ class IdToken <<Value Object>> {
   - expiresAt: DateTime
   - nonce: String
   - acr: String
-  - amr: List~String~
+  - amr: List~AuthenticationMethod~
   - claims: Map~String,Object~
-  --
-  + buildJwt(): String
 }
 
 class RefreshTokenFamily <<Entity>> {
   - id: String
   - userId: String
   - oauth2ClientId: String
-  - userSessionId: String
   - currentRefreshTokenId: String
   - version: Long
   - revokedAt: DateTime
@@ -398,7 +442,6 @@ class UserSession <<Entity>> {
   --
   + isSessionValid(): Boolean
   + refreshSession(): void
-  + revokeSession(refreshTokenFamily: RefreshTokenFamily): void
   + revokeSession(): void
 }
 
@@ -445,13 +488,11 @@ class LoginHistory <<Entity>> {
   - loginSuccessful: Boolean
   - failureReason: String
   --
-  + recordAttempt(): void
   + isAnomalous(): Boolean
 }
 
 class SecurityPolicy <<Entity>> {
   - id: String
-  - tenantId: String
   - policyName: String
   - maxLoginAttempts: Integer
   - maxMfaAttempts: Integer
@@ -482,15 +523,17 @@ class AuditLog <<Entity>> {
   - signature: String
   - timestamp: DateTime
   --
-  + logEvent(): void
   + verifyHashChain(previousLog: AuditLog): Boolean
 }
 
-class SigningKey <<Value Object>> {
+class SigningKey <<Entity>> {
   - keyId: String
   - algorithm: String
   - activeFrom: DateTime
   - expiresAt: DateTime
+  - archivedAt: DateTime
+  --
+  + isActive(): Boolean
 }
 
 interface KmsAdapter <<External Service>> {
@@ -502,6 +545,12 @@ class AuditIntegrityService <<Service>> {
   + sign(log: AuditLog): void
   + verify(log: AuditLog, previousLog: AuditLog): Boolean
   --
+}
+
+class TokenSerializer <<Service>> {
+  + buildIdToken(idToken: IdToken): String
+  + signAccessToken(token: AccessToken): String
+  + verifyJwt(jwt: String): Boolean
 }
 
 ' ===== APPLICATION SERVICES =====
@@ -539,8 +588,7 @@ class MfaService <<Service>> {
 
 class SecurityEngine <<Service>> {
   + assessLogin(user: User, device: DeviceFingerprint): RiskLevel
-  + requiresStepUp(permission: Permission): Boolean
-  + enforce(user: User, policy: SecurityPolicy): void
+  + evaluateStepUpRisk(permission: Permission): Boolean
 }
 
 class UserManagementService <<Service>> {
@@ -566,13 +614,14 @@ class PolicyEnforcementService <<Service>> {
   + enforceLoginPolicy(user: User): void
   + enforceMfaPolicy(challenge: MfaChallenge): void
   + enforcePasswordPolicy(user: User, newPassword: String): void
+  + enforceStepUpPolicy(userId: String, permission: Permission): void
 }
 
 class DomainEvent <<Event>> {
   - id: String
   - eventType: DomainEventType
   - aggregateId: String
-  - aggregateType: String
+  - aggregateType: AggregateType
   - occurredAt: DateTime
   - correlationId: String
   - causationId: String
@@ -584,7 +633,16 @@ class LoginFailedEvent <<Event>> {
   - userId: String
   - username: String
   - ipAddress: String
+  - userAgent: String
+  - deviceFingerprintId: String
   - failureReason: String
+  - riskLevel: RiskLevel
+}
+
+class LoginSucceededEvent <<Event>> {
+  - userId: String
+  - sessionId: String
+  - deviceFingerprintId: String
   - riskLevel: RiskLevel
 }
 
@@ -601,6 +659,20 @@ class RefreshTokenReusedEvent <<Event>> {
   - refreshTokenFamilyId: String
   - reusedTokenId: String
   - sessionId: String
+}
+
+class TokenIssuedEvent <<Event>> {
+  - userId: String
+  - oauth2ClientId: String
+  - tokenId: String
+  - tokenType: TokenType
+  - grantedScopeNames: List~String~
+}
+
+class UserLockedEvent <<Event>> {
+  - userId: String
+  - reason: String
+  - lockedAt: DateTime
 }
 
 interface EventBus <<Messaging>> {
@@ -642,6 +714,8 @@ package "Identity & RBAC" {
   class UserRole
   class RolePermission
   class ClientScopeGrant
+  class ScopePermission
+  class UserConsent
   class UserManagementService
   class AuthorizationService
 }
@@ -666,6 +740,7 @@ package "OAuth2 / OIDC" {
   class AuthorizationCode
   class RefreshTokenFamily
   class UserSession
+  class TokenSerializer
   class OAuth2AuthorizationService
   class TokenIntrospectionService
 }
@@ -687,8 +762,11 @@ package "Audit & Events" {
   class AuditIntegrityService
   class DomainEvent
   class LoginFailedEvent
+  class LoginSucceededEvent
   class MfaVerifiedEvent
   class RefreshTokenReusedEvent
+  class TokenIssuedEvent
+  class UserLockedEvent
   class DomainEventPublisher
   interface EventBus
 }
@@ -698,25 +776,34 @@ package "Audit & Events" {
 User --> UserStatus
 Permission --> SensitivityLevel
 MfaCredential --> MfaType
-MfaChallenge --> MfaType
+WebAuthnCredential --> AuthenticatorTransport
 MfaChallenge --> ChallengeStatus
 OAuth2Token --> TokenType
+OAuth2Token --> GrantType
 OAuth2Client --> ClientType
 AuthorizationCode --> CodeChallengeMethod
 OAuth2Scope --> SensitivityLevel
+IdToken --> AuthenticationMethod
 LoginHistory --> RiskLevel
 SecurityPolicy --> RiskLevel
 SecurityPolicy --> SensitivityLevel
 AuditLog --> AuditAction
 DomainEvent --> DomainEventType
+DomainEvent --> AggregateType
 AuditIntegrityService ..> AuditLog
 AuditIntegrityService ..> SigningKey
 AuditIntegrityService ..> KmsAdapter
+TokenSerializer ..> IdToken
+TokenSerializer ..> AccessToken
+TokenSerializer ..> SigningKey
+TokenSerializer ..> KmsAdapter
 
 User " 1 " -- " 0..* " UserRole
 Role " 1 " -- " 0..* " UserRole
 Role " 1 " -- " 0..* " RolePermission
 Permission " 1 " -- " 0..* " RolePermission
+OAuth2Scope " 1 " -- " 0..* " ScopePermission
+Permission " 1 " -- " 0..* " ScopePermission
 
 User " 1 " *-- " 0..* " PasswordHistory
 User " 1 " o-- " 0..* " PasswordResetToken
@@ -731,6 +818,8 @@ User " 1 " -- " 0..* " MfaChallenge
 User " 1 " o-- " 0..* " UserSession
 OAuth2Client " 1 " -- " 0..* " ClientScopeGrant
 OAuth2Scope " 1 " -- " 0..* " ClientScopeGrant
+User " 1 " -- " 0..* " UserConsent
+OAuth2Client " 1 " -- " 0..* " UserConsent
 OAuth2Client " 1 " -- " 0..* " UserSession
 UserSession " 1 " -- " 0..* " AccessToken
 OAuth2Client " 1 " -- " 0..* " AccessToken
@@ -738,12 +827,10 @@ User " 1 " -- " 0..* " AccessToken
 AccessToken --|> OAuth2Token
 RefreshToken --|> OAuth2Token
 OAuth2Client " 1 " -- " 0..* " AuthorizationCode
-UserSession " 1 " -- " 0..* " AuthorizationCode
 RefreshTokenFamily " 1 " *-- " 0..* " RefreshToken
-RefreshToken " 0..1 parent " -- " 0..1 rotatedTo " RefreshToken
+RefreshToken " 0..1 parent " -- " 0..* children " RefreshToken
 User " 1 " -- " 0..* " RefreshTokenFamily
 OAuth2Client " 1 " -- " 0..* " RefreshTokenFamily
-UserSession " 1 " -- " 0..1 " RefreshTokenFamily
 
 User " 1 " -- " 0..* " DeviceFingerprint
 User " 1 " -- " 0..* " TrustedDevice
@@ -755,10 +842,15 @@ User " 1 " -- " 0..* " AuditLog
 UserSession " 0..1 " -- " 0..* " AuditLog
 
 LoginFailedEvent --|> DomainEvent
+LoginSucceededEvent --|> DomainEvent
 MfaVerifiedEvent --|> DomainEvent
 RefreshTokenReusedEvent --|> DomainEvent
+TokenIssuedEvent --|> DomainEvent
+UserLockedEvent --|> DomainEvent
 LoginFailedEvent --> RiskLevel
+LoginSucceededEvent --> RiskLevel
 MfaVerifiedEvent --> MfaType
+TokenIssuedEvent --> TokenType
 DomainEventPublisher ..> EventBus
 EventBus ..> EventHandler
 AuditEventHandler ..|> EventHandler
@@ -772,12 +864,12 @@ AuthenticationService ..> DomainEventPublisher
 
 OAuth2AuthorizationService ..> DomainEventPublisher
 OAuth2AuthorizationService ..> IdToken
+OAuth2AuthorizationService ..> TokenSerializer
 
 
 MfaService ..> DomainEventPublisher
 
 SecurityEngine ..> RiskEvaluationService
-SecurityEngine ..> PolicyEnforcementService
 SecurityEngine ..> SecurityPolicy
 SecurityEngine ..> DeviceFingerprint
 SecurityEngine ..> LoginHistory
@@ -786,20 +878,6 @@ SecurityEngine ..> Permission
 UserManagementService ..> DomainEventPublisher
 
 AuthorizationService ..> SecurityEngine
-
-note right of User
-  User.passwordHash stores the current hash.
-  PasswordHistory stores previous hashes only.
-end note
-
-note right of RefreshTokenFamily
-  RefreshToken is owned by RefreshTokenFamily.
-  Session revocation must revoke the family.
-end note
-
-note right of DomainEvent
-  Only representative subclasses are expanded;
-  other DomainEventType values follow the same pattern.
-end note
+AuthorizationService ..> PolicyEnforcementService
 
 @enduml

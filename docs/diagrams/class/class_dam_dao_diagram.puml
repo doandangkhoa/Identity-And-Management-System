@@ -33,6 +33,11 @@ class TokenIntrospectionService <<Service>> {
   + resolvePermissions(token: AccessToken): List~Permission~
 }
 
+class PermissionResolver <<Service>> {
+  + resolveEffectivePermissions(userId: String): List~Permission~
+  + hasPermission(userId: String, resource: String, action: String): Boolean
+}
+
 interface UnitOfWork <<Transaction>> {
   + begin(): void
   + commit(): void
@@ -89,6 +94,11 @@ class DomainEventPublisher <<Service>> {
   + publishAll(events: List~DomainEvent~): void
 }
 
+class EventDispatcher <<Service>> {
+  + dispatch(event: DomainEvent): void
+  + replayPending(): void
+}
+
 class AuditEventHandler <<EventHandler>> {
   + handle(event: DomainEvent): void
 }
@@ -96,8 +106,8 @@ class AuditEventHandler <<EventHandler>> {
 ' ===== DAM / DAO LAYER =====
 
 interface UserRepository <<Repository>> {
-  + findById(id: String): User
-  + findByUsername(username: String): User
+  + findById(id: String): Optional~User~
+  + findByUsername(username: String): Optional~User~
   + save(user: User): void
   + updateStatus(userId: String, status: UserStatus): void
 }
@@ -111,13 +121,14 @@ interface RoleRepository <<Repository>> {
 
 interface PermissionRepository <<Repository>> {
   + findPermissionsByRoleId(roleId: String): List~Permission~
+  + findEffectivePermissionsByUserId(userId: String): List~Permission~
   + grantPermission(rolePermission: RolePermission): void
   + revokePermission(roleId: String, permissionId: String): void
   + save(permission: Permission): void
 }
 
 interface PasswordResetTokenRepository <<Repository>> {
-  + findByTokenHash(tokenHash: String): PasswordResetToken
+  + findByTokenHash(tokenHash: String): Optional~PasswordResetToken~
   + save(token: PasswordResetToken): void
   + markUsed(tokenId: String): void
 }
@@ -129,46 +140,47 @@ interface MfaCredentialRepository <<Repository>> {
 }
 
 interface RecoveryCodeSetRepository <<Repository>> {
-  + findActiveByCredentialId(credentialId: String): RecoveryCodeSet
+  + findActiveByCredentialId(credentialId: String): Optional~RecoveryCodeSet~
   + save(codeSet: RecoveryCodeSet): void
   + invalidateByCredentialId(credentialId: String): void
 }
 
 interface MfaChallengeRepository <<Repository>> {
-  + findActiveByUserId(userId: String): MfaChallenge
+  + findActiveByUserId(userId: String): List~MfaChallenge~
+  + findActiveByCredentialId(credentialId: String): Optional~MfaChallenge~
   + save(challenge: MfaChallenge): void
   + updateStatus(challengeId: String, status: ChallengeStatus): void
   + deleteExpired(): Integer
 }
 
 interface OAuth2ClientRepository <<Repository>> {
-  + findByClientId(clientId: String): OAuth2Client
+  + findByClientId(clientId: String): Optional~OAuth2Client~
   + save(client: OAuth2Client): void
   + rotateSecret(clientId: String, newSecretHash: String): void
   + deactivate(clientId: String): void
 }
 
 interface OAuth2ScopeRepository <<Repository>> {
-  + findByScopeName(scopeName: String): OAuth2Scope
+  + findByScopeName(scopeName: String): Optional~OAuth2Scope~
   + findAllowedByClientId(clientId: String): List~OAuth2Scope~
   + save(scope: OAuth2Scope): void
 }
 
 interface AuthorizationCodeRepository <<Repository>> {
-  + findByCodeHash(codeHash: String): AuthorizationCode
+  + findByCodeHash(codeHash: String): Optional~AuthorizationCode~
   + save(code: AuthorizationCode): void
   + consume(codeId: String): void
 }
 
 interface AccessTokenRepository <<Repository>> {
-  + findByTokenHash(tokenHash: String): AccessToken
+  + findByTokenHash(tokenHash: String): Optional~AccessToken~
   + save(token: AccessToken): void
   + revoke(tokenId: String): void
   + deleteExpired(): Integer
 }
 
 interface RefreshTokenRepository <<Repository>> {
-  + findByTokenHash(tokenHash: String): RefreshToken
+  + findByTokenHash(tokenHash: String): Optional~RefreshToken~
   + findByFamilyId(familyId: String): List~RefreshToken~
   + save(token: RefreshToken): void
   + revoke(tokenId: String): void
@@ -176,59 +188,84 @@ interface RefreshTokenRepository <<Repository>> {
 }
 
 interface RefreshTokenFamilyRepository <<Repository>> {
-  + findById(id: String): RefreshTokenFamily
-  + findActiveByUserAndClient(userId: String, clientId: String): RefreshTokenFamily
+  + findById(id: String): Optional~RefreshTokenFamily~
+  + findActiveByUserAndClient(userId: String, clientId: String): Optional~RefreshTokenFamily~
   + save(family: RefreshTokenFamily): void
   + revoke(familyId: String): void
 }
 
 interface UserSessionRepository <<Repository>> {
-  + findById(id: String): UserSession
+  + findById(id: String): Optional~UserSession~
   + findActiveByUserId(userId: String): List~UserSession~
   + save(session: UserSession): void
   + revoke(sessionId: String): void
 }
 
 interface DeviceFingerprintRepository <<Repository>> {
-  + findDeviceByHash(deviceHash: String): DeviceFingerprint
-  + saveDevice(device: DeviceFingerprint): void
+  + findByHash(deviceHash: String): Optional~DeviceFingerprint~
+  + save(device: DeviceFingerprint): void
 }
 
 interface TrustedDeviceRepository <<Repository>> {
-  + findTrustedDevice(userId: String, deviceFingerprintId: String): TrustedDevice
-  + saveTrustedDevice(device: TrustedDevice): void
+  + findByUserAndDevice(userId: String, deviceFingerprintId: String): Optional~TrustedDevice~
+  + save(device: TrustedDevice): void
 }
 
 interface LoginHistoryRepository <<Repository>> {
   + findRecentLoginHistory(userId: String): List~LoginHistory~
-  + saveLoginHistory(history: LoginHistory): void
+  + save(history: LoginHistory): void
 }
 
 interface RateLimitRepository <<Repository>> {
   + incrementAttempt(key: String): Integer
   + reset(key: String): void
   + isLimited(key: String): Boolean
+  + getRemainingAttempts(key: String): Integer
+  + getResetTime(key: String): DateTime
 }
 
 interface IdempotencyRepository <<Repository>> {
-  + findResult(key: String): String
+  + findResult(key: String): Optional~String~
   + saveResult(key: String, result: String): void
   + markInProgress(key: String): Boolean
 }
 
 interface SecurityPolicyRepository <<Repository>> {
-  + findActivePolicy(): SecurityPolicy
+  + findActivePolicy(): Optional~SecurityPolicy~
   + save(policy: SecurityPolicy): void
 }
 
 interface AuditLogRepository <<Repository>> {
   + save(log: AuditLog): void
   + findByUserId(userId: String): List~AuditLog~
+  + findByDateRange(from: DateTime, to: DateTime): List~AuditLog~
+  + findByAction(action: AuditAction): List~AuditLog~
+  + findByIpAddress(ipAddress: String): List~AuditLog~
 }
 
 interface EventStoreRepository <<Repository>> {
-  + append(event: DomainEvent): void
-  + findByAggregateId(aggregateId: String): List~DomainEvent~
+  + append(event: DomainEvent, expectedVersion: Long): void
+  + findByAggregateId(aggregateId: String, fromVersion: Long, toVersion: Long): List~DomainEvent~
+  + findPendingDispatch(limit: Integer): List~DomainEvent~
+}
+
+interface PermissionCacheRepository <<Repository>> {
+  + getEffectivePermissions(userId: String): Optional~List~Permission~~
+  + putEffectivePermissions(userId: String, permissions: List~Permission~, ttlSeconds: Integer): void
+  + invalidateUser(userId: String): void
+}
+
+interface JwtKeyRepository <<Repository>> {
+  + findActiveSigningKey(): Optional~JwtSigningKey~
+  + findByKeyId(keyId: String): Optional~JwtSigningKey~
+  + save(key: JwtSigningKey): void
+  + rotate(key: JwtSigningKey): void
+}
+
+interface UserConsentRepository <<Repository>> {
+  + findActiveConsent(userId: String, clientId: String): Optional~UserConsent~
+  + save(consent: UserConsent): void
+  + revoke(consentId: String): void
 }
 
 ' ===== LAYOUT HINTS =====
@@ -237,6 +274,7 @@ together {
   class AuthenticationService
   class OAuth2AuthorizationService
   class TokenIntrospectionService
+  class PermissionResolver
   class MfaService
   class SecurityEngine
   class UserManagementService
@@ -246,6 +284,7 @@ together {
 
 together {
   class DomainEventPublisher
+  class EventDispatcher
   class AuditEventHandler
   class DomainEvent
   interface EventHandler
@@ -280,11 +319,17 @@ together {
   interface SecurityPolicyRepository
   interface AuditLogRepository
   interface EventStoreRepository
+  interface PermissionCacheRepository
+  interface JwtKeyRepository
+  interface UserConsentRepository
 }
 
 ' ===== RELATIONSHIPS =====
 
 DomainEventPublisher ..> EventStoreRepository
+DomainEventPublisher ..> EventDispatcher
+EventDispatcher ..> EventStoreRepository
+EventDispatcher ..> EventHandler
 AuditEventHandler ..> AuditLogRepository
 AuthenticationService ..> UserRepository
 AuthenticationService ..> PasswordResetTokenRepository
@@ -303,8 +348,14 @@ OAuth2AuthorizationService ..> RefreshTokenFamilyRepository
 OAuth2AuthorizationService ..> UserSessionRepository
 OAuth2AuthorizationService ..> UserRepository
 OAuth2AuthorizationService ..> IdempotencyRepository
+OAuth2AuthorizationService ..> JwtKeyRepository
+OAuth2AuthorizationService ..> UserConsentRepository
 TokenIntrospectionService ..> AccessTokenRepository
-TokenIntrospectionService ..> AuthorizationService
+TokenIntrospectionService ..> PermissionResolver
+TokenIntrospectionService ..> JwtKeyRepository
+PermissionResolver ..> PermissionCacheRepository
+PermissionResolver ..> RoleRepository
+PermissionResolver ..> PermissionRepository
 MfaService ..> MfaCredentialRepository
 MfaService ..> RecoveryCodeSetRepository
 MfaService ..> MfaChallengeRepository
@@ -317,7 +368,7 @@ SecurityEngine ..> LoginHistoryRepository
 UserManagementService ..> UserRepository
 UserManagementService ..> RoleRepository
 AuthorizationService ..> RoleRepository
-AuthorizationService ..> PermissionRepository
+AuthorizationService ..> PermissionResolver
 AuthorizationService ..> SecurityPolicyRepository
 AuthenticationService ..> UnitOfWork
 OAuth2AuthorizationService ..> UnitOfWork
@@ -345,5 +396,8 @@ LoginHistoryRepository ..> LoginHistory
 SecurityPolicyRepository ..> SecurityPolicy
 AuditLogRepository ..> AuditLog
 EventStoreRepository ..> DomainEvent
+PermissionCacheRepository ..> Permission
+JwtKeyRepository ..> JwtSigningKey
+UserConsentRepository ..> UserConsent
 
 @enduml
