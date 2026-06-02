@@ -1,0 +1,214 @@
+@startuml Module_2_Risk_MFA_Detailed
+
+title Module 2: Risk-based Authentication & MFA (Detailed)
+
+top to bottom direction
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+skinparam nodesep 45
+skinparam ranksep 65
+
+enum MfaType {
+  TOTP
+  WEBAUTHN
+}
+
+enum AuthenticatorTransport {
+  USB
+  NFC
+  BLE
+  INTERNAL
+}
+
+enum ChallengeStatus {
+  PENDING
+  VERIFIED
+  EXPIRED
+  FAILED
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+abstract class MfaCredential <<Entity>> {
+  - id: String
+  - userId: String
+  - mfaType: MfaType
+  - isVerified: Boolean
+  - lastVerifiedAt: DateTime
+  - createdAt: DateTime
+  - updatedAt: DateTime
+  --
+  + verify(proof: String): Boolean
+  + enable(): void
+  + disable(): void
+}
+
+class TotpCredential <<Entity>> {
+  - secretKeyEncrypted: String
+  - algorithm: String
+  - digits: Integer
+  - periodSeconds: Integer
+  --
+  + verify(proof: String): Boolean
+}
+
+class WebAuthnCredential <<Entity>> {
+  - credentialId: String
+  - publicKey: String
+  - signCount: Long
+  - aaguid: String
+  - transports: List~AuthenticatorTransport~
+  - attestationType: String
+  --
+  + verify(proof: String): Boolean
+  + updateSignCount(newSignCount: Long): void
+  + isCloneSuspected(newSignCount: Long): Boolean
+}
+
+class RecoveryCodeSet <<Entity>> {
+  - id: String
+  - userId: String
+  - mfaCredentialId: String
+  - generatedAt: DateTime
+  - invalidatedAt: DateTime
+  - codesRemaining: Integer
+  --
+  + regenerate(): List~RecoveryCode~
+  + invalidate(): void
+  + isActive(): Boolean
+}
+
+class RecoveryCode <<Entity>> {
+  - id: String
+  - recoveryCodeSetId: String
+  - codeHash: String
+  - isUsed: Boolean
+  - usedAt: DateTime
+  - createdAt: DateTime
+  --
+  + verify(plainCode: String): Boolean
+  + markUsed(): void
+}
+
+class MfaChallenge <<Entity>> {
+  - id: String
+  - userId: String
+  - mfaCredentialId: String
+  - challengeType: MfaType
+  - status: ChallengeStatus
+  - attemptCount: Integer
+  - maxAttempts: Integer
+  - version: Long
+  - expiresAt: DateTime
+  - verifiedAt: DateTime
+  - createdAt: DateTime
+  --
+  + canAttempt(): Boolean
+  + recordFailedAttempt(): void
+  + verify(proof: String): Boolean
+  + expire(): void
+}
+
+class DeviceFingerprint <<Entity>> {
+  - id: String
+  - userId: String
+  - deviceHash: String
+  - signalHash: String
+  - userAgent: String
+  - ipAddress: String
+  - os: String
+  - browser: String
+  - geoCountry: String
+  - confidenceScore: Decimal
+  - trusted: Boolean
+  - firstSeenAt: DateTime
+  - lastSeenAt: DateTime
+  - expiresAt: DateTime
+  --
+  + matches(signalHash: String): Boolean
+  + markTrusted(): void
+}
+
+class TrustedDevice <<Entity>> {
+  - id: String
+  - userId: String
+  - deviceFingerprintId: String
+  - trustedUntil: DateTime
+  - revokedAt: DateTime
+  - createdAt: DateTime
+  --
+  + isTrusted(): Boolean
+  + revoke(): void
+}
+
+class LoginHistory <<Entity>> {
+  - id: String
+  - userId: String
+  - deviceFingerprintId: String
+  - timestamp: DateTime
+  - userAgent: String
+  - ipAddress: String
+  - riskLevel: RiskLevel
+  - loginSuccessful: Boolean
+  - failureReason: String
+  --
+  + recordAttempt(): void
+  + isAnomalous(): Boolean
+}
+
+interface MfaCredentialRepository <<Repository>> {
+  + findByUserId(userId: String): List~MfaCredential~
+  + save(credential: MfaCredential): void
+  + delete(id: String): void
+}
+
+interface RecoveryCodeSetRepository <<Repository>> {
+  + findActiveByCredentialId(credentialId: String): RecoveryCodeSet
+  + save(codeSet: RecoveryCodeSet): void
+  + invalidateByCredentialId(credentialId: String): void
+}
+
+interface MfaChallengeRepository <<Repository>> {
+  + findActiveByUserId(userId: String): MfaChallenge
+  + save(challenge: MfaChallenge): void
+  + updateStatus(challengeId: String, status: ChallengeStatus): void
+}
+
+interface DeviceTrustRepository <<Repository>> {
+  + findDeviceByHash(deviceHash: String): DeviceFingerprint
+  + saveDevice(device: DeviceFingerprint): void
+  + findTrustedDevice(userId: String, deviceFingerprintId: String): TrustedDevice
+  + saveTrustedDevice(device: TrustedDevice): void
+  + findRecentLoginHistory(userId: String): List~LoginHistory~
+  + saveLoginHistory(history: LoginHistory): void
+}
+
+MfaCredential --> MfaType
+WebAuthnCredential --> AuthenticatorTransport
+MfaChallenge --> MfaType
+MfaChallenge --> ChallengeStatus
+LoginHistory --> RiskLevel
+
+TotpCredential --|> MfaCredential
+WebAuthnCredential --|> MfaCredential
+MfaCredential "1" *-- "0..*" RecoveryCodeSet
+RecoveryCodeSet "1" *-- "0..*" RecoveryCode
+MfaCredential "1" -- "0..*" MfaChallenge
+
+DeviceFingerprint "1" -- "0..*" TrustedDevice
+DeviceFingerprint "1" -- "0..*" LoginHistory
+
+MfaCredentialRepository ..> MfaCredential
+RecoveryCodeSetRepository ..> RecoveryCodeSet
+MfaChallengeRepository ..> MfaChallenge
+DeviceTrustRepository ..> DeviceFingerprint
+DeviceTrustRepository ..> TrustedDevice
+DeviceTrustRepository ..> LoginHistory
+
+@enduml

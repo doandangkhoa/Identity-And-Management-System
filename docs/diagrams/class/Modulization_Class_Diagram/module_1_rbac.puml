@@ -1,0 +1,185 @@
+@startuml Module_1_Core_RBAC_Detailed
+
+title Module 1: Core Identity & RBAC Management (Detailed)
+
+left to right direction
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+skinparam nodesep 45
+skinparam ranksep 65
+
+enum UserStatus {
+  PENDING
+  ACTIVE
+  LOCKED
+  INACTIVE
+}
+
+enum SensitivityLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+class User <<Entity>> {
+  - id: String
+  - username: String
+  - email: String
+  - passwordHash: String
+  - status: UserStatus
+  - failedLoginAttempts: Integer
+  - version: Long
+  - lastLoginAt: DateTime
+  - passwordChangedAt: DateTime
+  - createdAt: DateTime
+  - updatedAt: DateTime
+  --
+  + changePassword(oldPassword: String, newPassword: String): Boolean
+  + lockAccount(): void
+  + unlockAccount(): void
+  + resetFailedAttempts(): void
+}
+
+class PasswordHistory <<Entity>> {
+  - id: String
+  - userId: String
+  - passwordHash: String
+  - createdAt: DateTime
+  --
+  + isPasswordReused(newPasswordHash: String): Boolean
+}
+
+class PasswordResetToken <<Entity>> {
+  - id: String
+  - userId: String
+  - tokenHash: String
+  - expiresAt: DateTime
+  - usedAt: DateTime
+  - createdAt: DateTime
+  --
+  + isExpired(): Boolean
+  + markUsed(): void
+}
+
+class Role <<Entity>> {
+  - id: String
+  - roleName: String
+  - description: String
+  - securityPolicyId: String
+  - isActive: Boolean
+  - createdAt: DateTime
+  - updatedAt: DateTime
+  --
+  + assignPermission(permission: Permission): void
+  + revokePermission(permission: Permission): void
+}
+
+class Permission <<Entity>> {
+  - id: String
+  - permissionName: String
+  - resource: String
+  - action: String
+  - sensitivityLevel: SensitivityLevel
+  - isActive: Boolean
+  --
+  + matches(resource: String, action: String): Boolean
+  + requiresStepUpAuth(): Boolean
+}
+
+class UserRole <<Association Entity>> {
+  - userId: String
+  - roleId: String
+  - assignedAt: DateTime
+  - assignedBy: String
+}
+
+class RolePermission <<Association Entity>> {
+  - roleId: String
+  - permissionId: String
+  - grantedAt: DateTime
+  - grantedBy: String
+}
+
+class SecurityPolicy <<Entity>> {
+  - id: String
+  - tenantId: String
+  - policyName: String
+  - maxLoginAttempts: Integer
+  - maxMfaAttempts: Integer
+  - passwordHistoryLimit: Integer
+  - lockoutDurationMinutes: Integer
+  - sessionTimeoutMinutes: Integer
+  - maxConcurrentSessions: Integer
+  - mfaRequired: Boolean
+  - riskMfaThreshold: RiskLevel
+  - stepUpSensitivityThreshold: SensitivityLevel
+  - isActive: Boolean
+  --
+  + isLockoutRequired(failedAttempts: Integer): Boolean
+  + requiresMfa(riskLevel: RiskLevel): Boolean
+  + requiresStepUp(permission: Permission): Boolean
+}
+
+interface UserRepository <<Repository>> {
+  + findById(id: String): User
+  + findByUsername(username: String): User
+  + save(user: User): void
+  + updateStatus(userId: String, status: UserStatus): void
+}
+
+interface RoleRepository <<Repository>> {
+  + findRolesByUserId(userId: String): List~Role~
+  + assignRole(userRole: UserRole): void
+  + removeRole(userId: String, roleId: String): void
+  + save(role: Role): void
+}
+
+interface PermissionRepository <<Repository>> {
+  + findPermissionsByRoleId(roleId: String): List~Permission~
+  + grantPermission(rolePermission: RolePermission): void
+  + revokePermission(roleId: String, permissionId: String): void
+  + save(permission: Permission): void
+}
+
+interface PasswordResetTokenRepository <<Repository>> {
+  + findByTokenHash(tokenHash: String): PasswordResetToken
+  + save(token: PasswordResetToken): void
+  + markUsed(tokenId: String): void
+}
+
+interface SecurityPolicyRepository <<Repository>> {
+  + findActivePolicy(): SecurityPolicy
+  + save(policy: SecurityPolicy): void
+}
+
+User --> UserStatus
+Permission --> SensitivityLevel
+SecurityPolicy --> RiskLevel
+SecurityPolicy --> SensitivityLevel
+
+User "1" *-- "0..*" PasswordHistory
+User "1" o-- "0..*" PasswordResetToken
+User "1" -- "0..*" UserRole
+Role "1" -- "0..*" UserRole
+Role "1" -- "0..*" RolePermission
+Permission "1" -- "0..*" RolePermission
+Role "0..*" -- "0..1" SecurityPolicy
+
+UserRepository ..> User
+RoleRepository ..> Role
+RoleRepository ..> UserRole
+PermissionRepository ..> Permission
+PermissionRepository ..> RolePermission
+PasswordResetTokenRepository ..> PasswordResetToken
+SecurityPolicyRepository ..> SecurityPolicy
+
+@enduml

@@ -1,0 +1,132 @@
+@startuml IAM_MFA_Overview_Vertical
+
+title IAM/MFA System - Overview (Synchronized)
+
+' Layout settings for A4 vertical
+top to bottom direction
+skinparam shadowing false
+skinparam linetype ortho
+skinparam nodesep 50
+skinparam ranksep 70
+hide members
+hide circle
+
+package "Identity & Policy" {
+  class User
+  class Role
+  class Permission
+  class UserRole
+  class RolePermission
+  class SecurityPolicy
+  class PasswordResetToken
+  class PasswordHistory
+  interface UserRepository
+  interface RoleRepository
+  interface PermissionRepository
+  interface SecurityPolicyRepository
+  interface PasswordResetTokenRepository
+}
+
+package "Security & MFA" {
+  class MfaCredential
+  class TotpCredential
+  class WebAuthnCredential
+  class MfaChallenge
+  class DeviceFingerprint
+  class TrustedDevice
+  class LoginHistory
+  class RecoveryCodeSet
+  class RecoveryCode
+  interface MfaCredentialRepository
+  interface MfaChallengeRepository
+  interface DeviceTrustRepository
+  interface RecoveryCodeSetRepository
+}
+
+package "Access & Session" {
+  class OAuth2Client
+  class OAuth2Scope
+  class ClientScopeGrant
+  class ScopePermission
+  class UserConsent
+  class OAuth2Token
+  class AccessToken
+  class RefreshToken
+  class RefreshTokenFamily
+  class AuthorizationCode
+  class UserSession
+  class AuditLog
+  interface UserSessionRepository
+  interface OAuth2ClientRepository
+  interface OAuth2ScopeRepository
+  interface AccessTokenRepository
+  interface RefreshTokenRepository
+  interface RefreshTokenFamilyRepository
+  interface AuthorizationCodeRepository
+  interface AuditLogRepository
+}
+
+' --- CRITICAL RELATIONSHIPS ---
+
+' Identity & RBAC
+User "1" -- "0..*" UserRole
+Role "1" -- "0..*" UserRole
+User "1" *-- "0..*" PasswordResetToken
+User "1" *-- "0..*" PasswordHistory
+Role "1" -- "0..*" RolePermission
+Permission "1" -- "0..*" RolePermission
+Role "0..*" -- "0..1" SecurityPolicy
+
+' Security & MFA
+MfaCredential <|-- TotpCredential
+MfaCredential <|-- WebAuthnCredential
+User "1" -- "0..*" MfaCredential
+MfaCredential "1" -- "0..*" MfaChallenge
+MfaCredential "1" *-- "0..*" RecoveryCodeSet
+RecoveryCodeSet "1" *-- "0..*" RecoveryCode
+User "1" -- "0..*" DeviceFingerprint
+DeviceFingerprint "1" -- "0..*" TrustedDevice
+DeviceFingerprint "1" -- "0..*" LoginHistory
+DeviceFingerprint "1" -- "0..*" UserSession
+
+' Access & Session
+OAuth2Token <|-- AccessToken
+OAuth2Token <|-- RefreshToken
+User "1" -- "0..*" UserSession
+User "1" -- "0..*" AuditLog
+UserSession "1" -- "0..*" OAuth2Token
+OAuth2Client "1" -- "0..*" UserSession
+OAuth2Client "1" -- "0..*" ClientScopeGrant
+OAuth2Scope "1" -- "0..*" ClientScopeGrant
+OAuth2Scope "1" -- "0..*" ScopePermission
+Permission "1" -- "0..*" ScopePermission
+OAuth2Client "1" -- "0..*" UserConsent
+User "1" -- "0..*" UserConsent
+OAuth2Client "1" -- "0..*" AuthorizationCode
+UserSession "1" -- "0..*" AuthorizationCode
+RefreshTokenFamily "1" *-- "0..*" RefreshToken
+OAuth2Client "1" -- "0..*" RefreshTokenFamily
+UserSession "1" -- "0..1" RefreshTokenFamily
+
+' --- PERSISTENCE (DAM) ALIGNMENT ---
+UserRepository .down.> User
+RoleRepository .down.> Role
+PermissionRepository .down.> Permission
+SecurityPolicyRepository .down.> SecurityPolicy
+PasswordResetTokenRepository .down.> PasswordResetToken
+
+MfaCredentialRepository .down.> MfaCredential
+MfaChallengeRepository .down.> MfaChallenge
+DeviceTrustRepository .down.> DeviceFingerprint
+RecoveryCodeSetRepository .down.> RecoveryCodeSet
+
+UserSessionRepository .down.> UserSession
+OAuth2ClientRepository .down.> OAuth2Client
+OAuth2ScopeRepository .down.> OAuth2Scope
+AccessTokenRepository .down.> AccessToken
+RefreshTokenRepository .down.> RefreshToken
+RefreshTokenFamilyRepository .down.> RefreshTokenFamily
+AuthorizationCodeRepository .down.> AuthorizationCode
+AuditLogRepository .down.> AuditLog
+
+@enduml

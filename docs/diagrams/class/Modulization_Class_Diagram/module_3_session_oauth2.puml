@@ -1,0 +1,313 @@
+@startuml Module_3_Session_OAuth2_Detailed
+
+title Module 3: Session Management & OAuth2 Tokens (Detailed)
+
+top to bottom direction
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+skinparam nodesep 45
+skinparam ranksep 65
+
+enum ClientType {
+  PUBLIC
+  CONFIDENTIAL
+}
+
+enum CodeChallengeMethod {
+  PLAIN
+  S256
+}
+
+enum GrantType {
+  AUTHORIZATION_CODE
+  REFRESH_TOKEN
+  CLIENT_CREDENTIALS
+  TOKEN_EXCHANGE
+}
+
+enum TokenType {
+  ACCESS_TOKEN
+  REFRESH_TOKEN
+}
+
+enum SensitivityLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum AuditAction {
+  LOGIN
+  LOGIN_FAILED
+  LOGOUT
+  MFA_ENABLED
+  MFA_DISABLED
+  MFA_VERIFIED
+  PASSWORD_CHANGED
+  USER_LOCKED
+  USER_UNLOCKED
+  ROLE_ASSIGNED
+  ROLE_REVOKED
+  TOKEN_ISSUED
+  TOKEN_REVOKED
+  REFRESH_TOKEN_ROTATED
+  REFRESH_TOKEN_REUSE_DETECTED
+  STEP_UP_REQUIRED
+}
+
+class OAuth2Client <<Entity>> {
+  - id: String
+  - clientId: String
+  - clientName: String
+  - clientType: ClientType
+  - clientSecretHash: String
+  - redirectUri: String
+  - grantTypes: List~String~
+  - pkceRequired: Boolean
+  - isActive: Boolean
+  - createdAt: DateTime
+  - updatedAt: DateTime
+  --
+  + authenticateClient(clientSecret: String): Boolean
+  + validateRedirectUri(redirectUri: String): Boolean
+  + requiresPkce(): Boolean
+  + revokeClient(): void
+}
+
+class OAuth2Scope <<Entity>> {
+  - id: String
+  - scopeName: String
+  - description: String
+  - resource: String
+  - sensitivityLevel: SensitivityLevel
+  - isActive: Boolean
+  --
+  + matches(scopeName: String): Boolean
+  + requiresStepUpAuth(): Boolean
+}
+
+class ClientScopeGrant <<Association Entity>> {
+  - oauth2ClientId: String
+  - oauth2ScopeId: String
+  - grantedAt: DateTime
+  - grantedBy: String
+}
+
+class ScopePermission <<Association Entity>> {
+  - oauth2ScopeId: String
+  - permissionId: String
+  - grantedAt: DateTime
+  - grantedBy: String
+}
+
+class UserConsent <<Entity>> {
+  - id: String
+  - userId: String
+  - oauth2ClientId: String
+  - grantedScopeNames: List~String~
+  - grantedAt: DateTime
+  - revokedAt: DateTime
+  --
+  + isActive(): Boolean
+  + revoke(): void
+}
+
+class AuthorizationCode <<Entity>> {
+  - id: String
+  - userId: String
+  - oauth2ClientId: String
+  - userSessionId: String
+  - codeHash: String
+  - nonce: String
+  - redirectUri: String
+  - grantedScopeNames: List~String~
+  - codeChallenge: String
+  - codeChallengeMethod: CodeChallengeMethod
+  - issuedAt: DateTime
+  - expiresAt: DateTime
+  - consumedAt: DateTime
+  --
+  + isExpired(): Boolean
+  + isConsumed(): Boolean
+  + verifyPkce(codeVerifier: String): Boolean
+  + consume(): void
+}
+
+abstract class OAuth2Token <<Entity>> {
+  - id: String
+  - userId: String
+  - oauth2ClientId: String
+  - userSessionId: String
+  - grantType: GrantType
+  - tokenHash: String
+  - tokenType: TokenType
+  - grantedScopeNames: List~String~
+  - issuedAt: DateTime
+  - expiresAt: DateTime
+  - revokedAt: DateTime
+  --
+  + isExpired(): Boolean
+  + isRevoked(): Boolean
+  + revoke(): void
+}
+
+class AccessToken <<Entity>> {
+  - audience: String
+  - permissionNames: List~String~
+  - introspectionRequired: Boolean
+  --
+  + allows(resource: String, action: String): Boolean
+}
+
+class RefreshToken <<Entity>> {
+  - refreshTokenFamilyId: String
+  - parentTokenId: String
+  - rotatedToTokenId: String
+  - consumedAt: DateTime
+  - reuseDetectedAt: DateTime
+  - version: Long
+  --
+  + isConsumed(): Boolean
+  + rotateTo(newRefreshToken: RefreshToken): void
+  + markReuseDetected(): void
+}
+
+class RefreshTokenFamily <<Entity>> {
+  - id: String
+  - userId: String
+  - oauth2ClientId: String
+  - userSessionId: String
+  - currentRefreshTokenId: String
+  - version: Long
+  - revokedAt: DateTime
+  - reuseDetectedAt: DateTime
+  - createdAt: DateTime
+  - updatedAt: DateTime
+  --
+  + rotate(currentToken: RefreshToken, newToken: RefreshToken): void
+  + detectReuse(token: RefreshToken): Boolean
+  + revokeFamily(reason: String): void
+}
+
+class UserSession <<Entity>> {
+  - id: String
+  - userId: String
+  - oauth2ClientId: String
+  - deviceFingerprintId: String
+  - ipAddress: String
+  - userAgent: String
+  - expiresAt: DateTime
+  - isRevoked: Boolean
+  - lastAccessedAt: DateTime
+  - createdAt: DateTime
+  --
+  + isSessionValid(): Boolean
+  + refreshSession(): void
+  + revokeSession(): void
+}
+
+class AuditLog <<Entity>> {
+  - id: String
+  - userId: String
+  - userSessionId: String
+  - action: AuditAction
+  - detail: String
+  - ipAddress: String
+  - userAgent: String
+  - previousLogHash: String
+  - logHash: String
+  - signature: String
+  - timestamp: DateTime
+  --
+  + logEvent(): void
+  + verifyHashChain(previousLog: AuditLog): Boolean
+}
+
+interface OAuth2ClientRepository <<Repository>> {
+  + findByClientId(clientId: String): OAuth2Client
+  + save(client: OAuth2Client): void
+  + deactivate(clientId: String): void
+}
+
+interface OAuth2ScopeRepository <<Repository>> {
+  + findByScopeName(scopeName: String): OAuth2Scope
+  + findAllowedByClientId(clientId: String): List~OAuth2Scope~
+  + save(scope: OAuth2Scope): void
+}
+
+interface AuthorizationCodeRepository <<Repository>> {
+  + findByCodeHash(codeHash: String): AuthorizationCode
+  + save(code: AuthorizationCode): void
+  + consume(codeId: String): void
+}
+
+interface AccessTokenRepository <<Repository>> {
+  + findByTokenHash(tokenHash: String): AccessToken
+  + save(token: AccessToken): void
+  + revoke(tokenId: String): void
+  + deleteExpired(): Integer
+}
+
+interface RefreshTokenRepository <<Repository>> {
+  + findByTokenHash(tokenHash: String): RefreshToken
+  + findByFamilyId(familyId: String): List~RefreshToken~
+  + save(token: RefreshToken): void
+  + revoke(tokenId: String): void
+  + revokeFamily(familyId: String): void
+}
+
+interface RefreshTokenFamilyRepository <<Repository>> {
+  + findById(id: String): RefreshTokenFamily
+  + findActiveByUserAndClient(userId: String, clientId: String): RefreshTokenFamily
+  + save(family: RefreshTokenFamily): void
+  + revoke(familyId: String): void
+}
+
+interface UserSessionRepository <<Repository>> {
+  + findById(id: String): UserSession
+  + findActiveByUserId(userId: String): List~UserSession~
+  + save(session: UserSession): void
+  + revoke(sessionId: String): void
+}
+
+interface AuditLogRepository <<Repository>> {
+  + save(log: AuditLog): void
+  + findByUserId(userId: String): List~AuditLog~
+}
+
+OAuth2Client --> ClientType
+AuthorizationCode --> CodeChallengeMethod
+OAuth2Token -left-> GrantType
+OAuth2Token -right-> TokenType
+OAuth2Scope --> SensitivityLevel
+AuditLog --> AuditAction
+
+OAuth2Client "1" -- "0..*" ClientScopeGrant
+OAuth2Scope "1" -- "0..*" ClientScopeGrant
+OAuth2Scope "1" -- "0..*" ScopePermission
+OAuth2Client "1" -- "0..*" UserConsent
+OAuth2Client "1" -- "0..*" UserSession
+UserSession "1" -- "0..*" OAuth2Token
+OAuth2Client "1" -- "0..*" OAuth2Token
+AccessToken --|> OAuth2Token
+RefreshToken --|> OAuth2Token
+OAuth2Client "1" -- "0..*" AuthorizationCode
+UserSession "1" -- "0..*" AuthorizationCode
+RefreshTokenFamily "1" *-- "0..*" RefreshToken
+RefreshToken "0..1 parent" -- "0..1 rotatedTo" RefreshToken
+OAuth2Client "1" -- "0..*" RefreshTokenFamily
+UserSession "1" -- "0..1" RefreshTokenFamily
+UserSession "0..1" -- "0..*" AuditLog
+
+OAuth2ClientRepository ..> OAuth2Client
+OAuth2ScopeRepository ..> OAuth2Scope
+AuthorizationCodeRepository ..> AuthorizationCode
+AccessTokenRepository ..> AccessToken
+RefreshTokenRepository ..> RefreshToken
+RefreshTokenFamilyRepository ..> RefreshTokenFamily
+UserSessionRepository ..> UserSession
+AuditLogRepository ..> AuditLog
+
+@enduml
