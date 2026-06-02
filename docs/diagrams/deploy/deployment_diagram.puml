@@ -1,0 +1,129 @@
+@startuml IAM_MFA_Deployment_Monochrome_Compact
+
+title IAM/MFA System - Deployment Architecture (Compact Monochrome + SIEM)
+
+' === Clean Monochrome Styling ===
+skinparam {
+    BackgroundColor white
+    RoundCorner 5
+    Shadowing false
+    Linetype ortho
+    Nodesep 60
+    Ranksep 70
+    DefaultFontName "Arial"
+    DefaultFontSize 11
+    DefaultFontColor black
+}
+
+skinparam arrow {
+    Color black
+    FontColor black
+    FontSize 10
+}
+
+skinparam node {
+    BackgroundColor white
+    BorderColor black
+}
+
+skinparam database {
+    BackgroundColor white
+    BorderColor black
+}
+
+skinparam component {
+    BackgroundColor white
+    BorderColor black
+}
+
+skinparam rectangle {
+    BackgroundColor white
+    BorderColor black
+}
+
+skinparam cloud {
+    BackgroundColor white
+    BorderColor black
+}
+
+' Scale to ensure A4 fit
+scale 0.75
+top to bottom direction
+
+' --- EXTERNAL ZONE ---
+cloud "Public Internet" as internet {
+    together {
+        node "User Device" as user_device {
+            component "Web/Mobile App" as client_app
+            component "Authenticator\n(FIDO2/TOTP)" as auth
+        }
+        node "3rd Party System" as third_party {
+            component "OAuth2 Client App" as oauth2_client
+        }
+    }
+}
+
+' --- CLOUD INFRASTRUCTURE ---
+rectangle "Cloud Infrastructure (VPC)" as vpc {
+    
+    rectangle "Public Subnet (DMZ)" as dmz {
+        component "API Gateway / WAF\n(Load Balancer)" as lb
+    }
+
+    rectangle "Private Subnet - App Tier" as app_tier {
+        node "App Server Group" as app_group {
+            node "Instance 1" as app1 {
+                [Identity & RBAC Module]
+                [MFA & Risk Module]
+                [OAuth2 & Session Module]
+            }
+        }
+    }
+
+    rectangle "Private Subnet - Data Tier" as data_tier {
+        together {
+            database "SQL Primary" as db_p {
+                artifact "• Users, Roles, Policies\n• OAuth Clients, Tokens"
+            }
+            database "SQL Replica" as db_r
+        }
+        
+        together {
+            database "Redis Cache" as redis {
+                artifact "• Active Sessions\n• Rate Limits, MFA"
+            }
+            database "Audit Store (NoSQL)" as audit_db {
+                artifact "• Audit Logs\n• Login History"
+            }
+        }
+    }
+
+    rectangle "Private Subnet - Management & Security Tier" as mgt_tier {
+        component "KMS Service" as kms
+        component "SIEM / Monitoring\n(Splunk / ELK)" as siem
+        note bottom of kms: JWT Signing & Encryption
+    }
+}
+
+cloud "External Services" as ext {
+    component "Email / SMS Gateway" as notification_service
+}
+
+' --- RELATIONSHIPS & PROTOCOLS (EXPLICIT) ---
+auth .up.> client_app : FIDO2/HID
+client_app --down--> lb : HTTPS/TLS
+oauth2_client --down--> lb : HTTPS/TLS
+
+lb --down--> app1 : HTTPS
+lb --down--> app_group : HTTPS
+
+app1 --down--> db_p : JDBC/TLS
+app1 --down--> redis : RESP/TLS
+app1 --down--> audit_db : TCP/TLS
+db_p -right-> db_r : Async Sync
+
+app1 -right-> kms : API/TLS
+app1 -right-> siem : Syslog/TLS
+app1 -left-> notification_service : API/TLS
+
+@enduml
